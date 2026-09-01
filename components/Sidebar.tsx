@@ -41,6 +41,7 @@ export function Sidebar() {
 
   const navItems = [
     { href: '/dashboard/employee', icon: Home, label: 'Dashboard' },
+    { href: '/customers', icon: Users, label: 'Customers' },
     { href: '/dashboard/employee/transactions', icon: Users, label: 'Transactions' },
     { href: '/settings', icon: Settings, label: 'Settings' },
   ]
