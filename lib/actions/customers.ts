@@ -12,6 +12,9 @@ import {
   CustomerInteraction,
   CustomerStatus,
   FieldChange,
+  IndividualCustomer,
+  BusinessCustomer,
+  CustomerType,
 } from '@/lib/types/customer';
 import { validateCustomerFormData, hasValidationErrors, getErrorMessages } from '@/lib/validation/customer-validation';
 import { checkPermission } from '@/lib/auth/permissions';
@@ -135,7 +138,7 @@ export async function getCustomers(
     const totalPages = Math.ceil((count || 0) / pageSize);
 
     return {
-      customers: (data || []) as Customer[],
+      customers: (data || []).map(transformCustomerListData) as Customer[],
       totalCount: count || 0,
       pageSize,
       currentPage: page,
@@ -161,7 +164,7 @@ export async function getCustomers(
  */
 export async function getCustomerDetail(
   customerId: string
-): Promise<{ customer?: CustomerDetail; interactions?: CustomerInteraction[]; auditLog?: AuditLogEntry[]; error?: string }> {
+): Promise<{ success: boolean; customer?: CustomerDetail; interactions?: CustomerInteraction[]; auditLog?: AuditLogEntry[]; error?: string; statusCode?: number }> {
   try {
     const supabase = await createServerClient();
 
@@ -170,7 +173,7 @@ export async function getCustomerDetail(
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return { error: 'Unauthorized' };
+      return { success: false, error: 'Unauthorized', statusCode: 401 };
     }
 
     // Get customer to check permissions
@@ -181,7 +184,7 @@ export async function getCustomerDetail(
       .single();
 
     if (customerError || !customer) {
-      return { error: 'Customer not found' };
+      return { success: false, error: 'Customer not found', statusCode: 404 };
     }
 
     // Check if user can view this customer
@@ -193,7 +196,7 @@ export async function getCustomerDetail(
 
     // Employees can only view assigned customers
     if (userRole?.role === 'employee' && customer.assigned_employee_id !== user.id) {
-      return { error: 'Permission denied' };
+      return { success: false, error: 'Permission denied', statusCode: 403 };
     }
 
     // Fetch interactions
@@ -216,14 +219,119 @@ export async function getCustomerDetail(
     }
 
     return {
-      customer: customer as CustomerDetail,
-      interactions: (interactions || []) as CustomerInteraction[],
-      auditLog,
+      success: true,
+      customer: transformCustomerData(customer) as CustomerDetail,
+      interactions: (interactions || []).map(transformInteractionData) as CustomerInteraction[],
+      auditLog: (auditLog || []).map(transformAuditLogData) as AuditLogEntry[],
     };
   } catch (error) {
     console.error('Error in getCustomerDetail:', error);
-    return { error: error instanceof Error ? error.message : 'Unknown error' };
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error', statusCode: 500 };
   }
+}
+
+/**
+ * Transform database customer record from snake_case to camelCase (for list view)
+ */
+function transformCustomerListData(dbCustomer: any): Customer {
+  const base = {
+    id: dbCustomer.id,
+    customerType: dbCustomer.customer_type,
+    status: dbCustomer.status,
+    email: dbCustomer.email,
+    phone: dbCustomer.phone,
+    address: dbCustomer.address,
+    assignedEmployeeId: dbCustomer.assigned_employee_id,
+    createdAt: dbCustomer.created_at,
+    createdBy: dbCustomer.created_by,
+    updatedAt: dbCustomer.updated_at,
+    updatedBy: dbCustomer.updated_by,
+  };
+
+  if (dbCustomer.customer_type === 'individual') {
+    return {
+      ...base,
+      customerType: CustomerType.Individual,
+      firstName: dbCustomer.first_name,
+      lastName: dbCustomer.last_name,
+      dateOfBirth: dbCustomer.date_of_birth,
+    } as IndividualCustomer;
+  } else {
+    return {
+      ...base,
+      customerType: CustomerType.Business,
+      businessName: dbCustomer.business_name,
+      contactPerson: dbCustomer.contact_person,
+      businessRegistrationNumber: dbCustomer.business_registration_number,
+      taxId: dbCustomer.tax_id,
+      website: dbCustomer.website,
+    } as BusinessCustomer;
+  }
+}
+
+/**
+ * Transform database customer record from snake_case to camelCase
+ */
+function transformCustomerData(dbCustomer: any): CustomerDetail {
+  return {
+    id: dbCustomer.id,
+    customerType: dbCustomer.customer_type,
+    status: dbCustomer.status,
+    email: dbCustomer.email,
+    phone: dbCustomer.phone,
+    address: dbCustomer.address,
+    assignedEmployeeId: dbCustomer.assigned_employee_id,
+    createdAt: dbCustomer.created_at,
+    createdBy: dbCustomer.created_by,
+    updatedAt: dbCustomer.updated_at,
+    updatedBy: dbCustomer.updated_by,
+    firstName: dbCustomer.first_name,
+    lastName: dbCustomer.last_name,
+    dateOfBirth: dbCustomer.date_of_birth,
+    businessName: dbCustomer.business_name,
+    contactPerson: dbCustomer.contact_person,
+    businessRegistrationNumber: dbCustomer.business_registration_number,
+    taxId: dbCustomer.tax_id,
+    website: dbCustomer.website,
+    interactions: [],
+    auditLog: [],
+  };
+}
+
+/**
+ * Transform database interaction record from snake_case to camelCase
+ */
+function transformInteractionData(dbInteraction: any): CustomerInteraction {
+  return {
+    id: dbInteraction.id,
+    customerId: dbInteraction.customer_id,
+    interactionType: dbInteraction.interaction_type,
+    content: dbInteraction.content,
+    isDeleted: dbInteraction.is_deleted,
+    createdAt: dbInteraction.created_at,
+    createdBy: dbInteraction.created_by,
+    updatedAt: dbInteraction.updated_at,
+    updatedBy: dbInteraction.updated_by,
+    deletedAt: dbInteraction.deleted_at,
+    deletedBy: dbInteraction.deleted_by,
+  };
+}
+
+/**
+ * Transform database audit log record from snake_case to camelCase
+ */
+function transformAuditLogData(dbAuditLog: any): AuditLogEntry {
+  return {
+    id: dbAuditLog.id,
+    customerId: dbAuditLog.customer_id,
+    operationType: dbAuditLog.operation_type,
+    fieldName: dbAuditLog.field_name,
+    previousValue: dbAuditLog.previous_value,
+    newValue: dbAuditLog.new_value,
+    details: dbAuditLog.details,
+    createdAt: dbAuditLog.created_at,
+    createdBy: dbAuditLog.created_by,
+  };
 }
 
 /**
@@ -276,7 +384,7 @@ export async function getCustomerAuditLog(
  */
 export async function createCustomer(
   data: CustomerFormData
-): Promise<{ success: boolean; customerId?: string; error?: string }> {
+): Promise<{ success: boolean; customerId?: string; error?: string; validationErrors?: ValidationErrors }> {
   try {
     const supabase = await createServerClient();
 
@@ -302,8 +410,7 @@ export async function createCustomer(
     // Validate input
     const errors = validateCustomerFormData(data);
     if (hasValidationErrors(errors)) {
-      const errorMessages = getErrorMessages(errors);
-      return { success: false, error: errorMessages.join('; ') };
+      return { success: false, validationErrors: errors };
     }
 
     // Create customer
@@ -338,7 +445,7 @@ export async function createCustomer(
     // Create audit log entry
     await createAuditLogEntry(
       createdCustomer.id,
-      'create',
+      OperationType.Create,
       user.id,
       undefined,
       { customerType: data.customerType }
@@ -357,7 +464,7 @@ export async function createCustomer(
 export async function updateCustomer(
   customerId: string,
   updates: Partial<CustomerFormData>
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; validationErrors?: ValidationErrors }> {
   try {
     const supabase = await createServerClient();
 
@@ -473,7 +580,7 @@ export async function updateCustomer(
       for (const change of changes) {
         await createAuditLogEntry(
           customerId,
-          'update',
+          OperationType.Update,
           user.id,
           [change],
           undefined
@@ -544,7 +651,7 @@ export async function softDeleteCustomer(
     // Create audit log entry
     await createAuditLogEntry(
       customerId,
-      'delete',
+      OperationType.Delete,
       user.id,
       [
         {
@@ -608,7 +715,7 @@ export async function reactivateCustomer(
     // Create audit log entry
     await createAuditLogEntry(
       customerId,
-      'reactivate',
+      OperationType.Reactivate,
       user.id,
       undefined,
       undefined
@@ -683,7 +790,7 @@ export async function addCustomerNote(
     // Create audit log entry
     await createAuditLogEntry(
       customerId,
-      'action',
+      OperationType.Action,
       user.id,
       undefined,
       { action: 'added_note', noteId: interaction.id }
@@ -762,7 +869,7 @@ export async function updateCustomerNote(
     // Create audit log entry
     await createAuditLogEntry(
       interaction.customer_id,
-      'action',
+      OperationType.Action,
       user.id,
       undefined,
       { action: 'updated_note', noteId: interactionId }
@@ -835,7 +942,7 @@ export async function deleteCustomerNote(
     // Create audit log entry
     await createAuditLogEntry(
       interaction.customer_id,
-      'action',
+      OperationType.Action,
       user.id,
       undefined,
       { action: 'deleted_note', noteId: interactionId }
@@ -905,7 +1012,7 @@ export async function assignCustomerToEmployee(
     // Create audit log entry
     await createAuditLogEntry(
       customerId,
-      'assign',
+      OperationType.Assign,
       user.id,
       [
         {

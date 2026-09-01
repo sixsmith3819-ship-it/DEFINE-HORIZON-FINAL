@@ -28,6 +28,7 @@ export enum OperationType {
   Delete = 'delete',
   Assign = 'assign',
   Reactivate = 'reactivate',
+  Action = 'action',
 }
 
 // Base Customer Interface

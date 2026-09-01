@@ -34,13 +34,11 @@ function formatDate(dateString: string): string {
 }
 
 // Get display name for a customer
-function getCustomerDisplayName(customer: any): string {
-  if (customer.customerType === 'individual' || customer.customer_type === 'individual') {
-    const firstName = customer.firstName || customer.first_name;
-    const lastName = customer.lastName || customer.last_name;
-    return `${firstName} ${lastName}`;
+function getCustomerDisplayName(customer: CustomerDetail): string {
+  if (customer.customerType === 'individual') {
+    return `${customer.firstName || ''} ${customer.lastName || ''}`.trim();
   }
-  return customer.businessName || customer.business_name;
+  return customer.businessName || '';
 }
 
 // Customer detail content component
@@ -91,17 +89,28 @@ async function CustomerDetailContent({ customerId }: { customerId: string }) {
   const interactions = detailResult.interactions || [];
   const auditLog = detailResult.auditLog || [];
 
+  if (!customer) {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+        <h2 className="text-yellow-800 font-semibold text-lg mb-2">Customer Not Found</h2>
+        <p className="text-yellow-700 mb-4">The customer you're looking for doesn't exist or has been deleted.</p>
+        <Link href="/customers" className="text-blue-600 hover:text-blue-800 font-medium">
+          ← Back to Customer List
+        </Link>
+      </div>
+    );
+  }
+
   // Determine if user is manager/admin for edit permissions
   const canEdit = await checkPermission(user.id, 'edit', { customerId });
   const canSoftDelete = await checkPermission(user.id, 'delete', { customerId });
   const canAssign = await checkPermission(user.id, 'assign', { customerId });
-  const canAddNote = await checkPermission(user.id, 'add_note', { customerId, assignedEmployeeId: customer.assigned_employee_id });
+  const canAddNote = await checkPermission(user.id, 'add_note', { customerId, assignedEmployeeId: customer.assignedEmployeeId });
   const canViewAudit = await checkPermission(user.id, 'view_audit_log', {});
 
   // Get customer type for display
-  const customerType = customer.customer_type || customer.customerType;
-  const isIndividual = customerType === 'individual';
-  const isBusiness = customerType === 'business';
+  const isIndividual = customer.customerType === 'individual';
+  const isBusiness = customer.customerType === 'business';
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -122,7 +131,7 @@ async function CustomerDetailContent({ customerId }: { customerId: string }) {
             </h1>
             <div className="flex flex-wrap gap-3">
               <StatusBadge status={customer.status} />
-              <TypeBadge type={customerType as CustomerType} />
+              <TypeBadge type={customer.customerType} />
             </div>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -202,17 +211,17 @@ async function CustomerDetailContent({ customerId }: { customerId: string }) {
                 <div className="space-y-3">
                   <div>
                     <label className="text-sm font-medium text-gray-600">First Name</label>
-                    <p className="text-gray-900">{customer.first_name}</p>
+                    <p className="text-gray-900">{customer.firstName}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Last Name</label>
-                    <p className="text-gray-900">{customer.last_name}</p>
+                    <p className="text-gray-900">{customer.lastName}</p>
                   </div>
-                  {customer.date_of_birth && (
+                  {customer.dateOfBirth && (
                     <div>
                       <label className="text-sm font-medium text-gray-600">Date of Birth</label>
                       <p className="text-gray-900">
-                        {new Date(customer.date_of_birth).toLocaleDateString()}
+                        {new Date(customer.dateOfBirth).toLocaleDateString()}
                       </p>
                     </div>
                   )}
@@ -227,20 +236,20 @@ async function CustomerDetailContent({ customerId }: { customerId: string }) {
                 <div className="space-y-3">
                   <div>
                     <label className="text-sm font-medium text-gray-600">Business Name</label>
-                    <p className="text-gray-900">{customer.business_name}</p>
+                    <p className="text-gray-900">{customer.businessName}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Contact Person</label>
-                    <p className="text-gray-900">{customer.contact_person}</p>
+                    <p className="text-gray-900">{customer.contactPerson}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Registration Number</label>
-                    <p className="text-gray-900">{customer.business_registration_number}</p>
+                    <p className="text-gray-900">{customer.businessRegistrationNumber}</p>
                   </div>
-                  {customer.tax_id && (
+                  {customer.taxId && (
                     <div>
                       <label className="text-sm font-medium text-gray-600">Tax ID</label>
-                      <p className="text-gray-900">{customer.tax_id}</p>
+                      <p className="text-gray-900">{customer.taxId}</p>
                     </div>
                   )}
                   {customer.website && (
@@ -265,11 +274,11 @@ async function CustomerDetailContent({ customerId }: { customerId: string }) {
               <div className="space-y-3">
                 <div>
                   <label className="text-sm font-medium text-gray-600">Created On</label>
-                  <p className="text-gray-900">{formatDate(customer.created_at)}</p>
+                  <p className="text-gray-900">{formatDate(customer.createdAt)}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-600">Last Updated</label>
-                  <p className="text-gray-900">{formatDate(customer.updated_at)}</p>
+                  <p className="text-gray-900">{formatDate(customer.updatedAt)}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-600">Customer ID</label>
@@ -282,9 +291,9 @@ async function CustomerDetailContent({ customerId }: { customerId: string }) {
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Assignment</h3>
               <div className="bg-gray-50 rounded p-4">
-                {customer.assigned_employee_id ? (
+                {customer.assignedEmployeeId ? (
                   <p className="text-gray-900">
-                    Assigned to: <span className="font-medium">{customer.assigned_employee_id}</span>
+                    Assigned to: <span className="font-medium">{customer.assignedEmployeeId}</span>
                   </p>
                 ) : (
                   <p className="text-gray-600">Not assigned to any employee</p>
@@ -348,26 +357,26 @@ async function CustomerDetailContent({ customerId }: { customerId: string }) {
               <div
                 key={interaction.id}
                 className={`p-4 border rounded-lg ${
-                  interaction.is_deleted ? 'bg-gray-50 border-gray-300' : 'bg-white border-gray-200'
+                  interaction.isDeleted ? 'bg-gray-50 border-gray-300' : 'bg-white border-gray-200'
                 }`}
               >
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <p className="text-sm text-gray-600">
-                      {interaction.created_by} • {formatDate(interaction.created_at)}
+                      {interaction.createdBy} • {formatDate(interaction.createdAt)}
                     </p>
-                    {interaction.is_deleted && (
-                      <p className="text-xs text-red-600">Deleted by {interaction.deleted_by} on {formatDate(interaction.deleted_at || '')}</p>
+                    {interaction.isDeleted && (
+                      <p className="text-xs text-red-600">Deleted by {interaction.deletedBy} on {formatDate(interaction.deletedAt || '')}</p>
                     )}
                   </div>
-                  {!interaction.is_deleted && canAddNote && (
+                  {!interaction.isDeleted && canAddNote && (
                     <div className="flex gap-2">
                       <button className="text-sm text-blue-600 hover:text-blue-800">Edit</button>
                       <button className="text-sm text-red-600 hover:text-red-800">Delete</button>
                     </div>
                   )}
                 </div>
-                <p className={`text-gray-900 ${interaction.is_deleted ? 'line-through opacity-50' : ''}`}>
+                <p className={`text-gray-900 ${interaction.isDeleted ? 'line-through opacity-50' : ''}`}>
                   {interaction.content}
                 </p>
               </div>
@@ -385,22 +394,22 @@ async function CustomerDetailContent({ customerId }: { customerId: string }) {
               <div key={entry.id} className="p-4 border border-gray-200 rounded-lg">
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <p className="font-semibold text-gray-900 capitalize">{entry.operation_type}</p>
+                    <p className="font-semibold text-gray-900 capitalize">{entry.operationType}</p>
                     <p className="text-sm text-gray-600">
-                      {entry.created_by} • {formatDate(entry.created_at)}
+                      {entry.createdBy} • {formatDate(entry.createdAt)}
                     </p>
                   </div>
                 </div>
-                {entry.field_name && (
+                {entry.fieldName && (
                   <div className="bg-gray-50 rounded p-3 mt-3 text-sm">
                     <p className="font-mono text-gray-700">
-                      <span className="font-semibold">{entry.field_name}:</span>{' '}
+                      <span className="font-semibold">{entry.fieldName}:</span>{' '}
                       <span className="text-red-600">
-                        {entry.previous_value || '(empty)'}
+                        {entry.previousValue || '(empty)'}
                       </span>
                       {' → '}
                       <span className="text-green-600">
-                        {entry.new_value || '(empty)'}
+                        {entry.newValue || '(empty)'}
                       </span>
                     </p>
                   </div>
