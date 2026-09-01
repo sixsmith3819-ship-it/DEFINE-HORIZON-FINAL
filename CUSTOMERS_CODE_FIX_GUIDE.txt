@@ -1,0 +1,36 @@
+﻿-- ============================================================================
+-- QUICK FIX: Update getCustomers function column references
+-- ============================================================================
+
+-- The issue: getCustomers uses old column names
+-- - first_name, last_name, business_name, phone
+-- But fresh database has:
+-- - customer_name, phone_number
+
+-- SOLUTION: Update lib/actions/customers.ts
+
+-- Line 67-68: Change search query from:
+-- first_name.ilike.%,last_name.ilike.%,business_name.ilike.%,email.ilike.%,phone.ilike.%
+-- TO:
+-- customer_name.ilike.%,email.ilike.%,phone_number.ilike.%
+
+-- Line 54-57: Change user_roles query from:
+-- .from('user_roles')
+-- .select('role')
+-- .eq('user_id', user.id)
+-- TO:
+-- .from('profiles')
+-- .select('role')
+-- .eq('id', user.id)
+
+-- Line 99: Change orderByColumn from:
+-- orderByColumn = 'first_name';
+-- TO:
+-- orderByColumn = 'customer_name';
+
+-- This same pattern appears in multiple functions, all need updating:
+-- - getCustomers (line 67, 99)
+-- - getCustomerDetail (lines using user_roles)
+-- - createCustomer (lines using user_roles)
+-- - updateCustomer (lines using user_roles)
+-- - deleteCustomer (lines using user_roles)
