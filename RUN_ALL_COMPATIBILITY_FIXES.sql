@@ -89,6 +89,31 @@ CREATE INDEX IF NOT EXISTS idx_customers_phone ON public.customers(phone);
 -- PART 2: ANNOUNCEMENTS COMPATIBILITY
 -- ============================================================================
 
+-- Add updated_by column (if it doesn't exist)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'announcements' AND column_name = 'updated_by'
+  ) THEN
+    ALTER TABLE public.announcements
+    ADD COLUMN updated_by UUID REFERENCES auth.users(id);
+    
+    -- Set default value for existing rows
+    UPDATE public.announcements 
+    SET updated_by = created_by 
+    WHERE updated_by IS NULL;
+    
+    -- Make it NOT NULL after setting defaults
+    ALTER TABLE public.announcements
+    ALTER COLUMN updated_by SET NOT NULL;
+    
+    RAISE NOTICE 'Added updated_by column to announcements';
+  ELSE
+    RAISE NOTICE 'updated_by column already exists in announcements';
+  END IF;
+END $$;
+
 -- Add message column (only if it doesn't exist)
 DO $$
 BEGIN
@@ -106,6 +131,7 @@ BEGIN
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_announcements_message ON public.announcements(message);
+CREATE INDEX IF NOT EXISTS idx_announcements_updated_by ON public.announcements(updated_by);
 
 -- ============================================================================
 -- PART 3: FIX FOREIGN KEY RELATIONSHIPS
@@ -144,7 +170,7 @@ ORDER BY column_name;
 SELECT 'ANNOUNCEMENTS TABLE' as section, column_name, data_type
 FROM information_schema.columns
 WHERE table_name = 'announcements'
-  AND column_name IN ('content', 'message', 'title')
+  AND column_name IN ('content', 'message', 'title', 'updated_by', 'updated_at')
 ORDER BY column_name;
 
 -- Check views
