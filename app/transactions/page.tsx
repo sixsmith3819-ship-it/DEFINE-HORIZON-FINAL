@@ -8,15 +8,18 @@ import SearchAndFilter from '@/components/transactions/SearchAndFilter';
 export default async function TransactionsPage({
   searchParams,
 }: {
-  searchParams: { page?: string; search?: string; provider?: string; type?: string; direction?: string; status?: string };
+  searchParams: Promise<{ page?: string; search?: string; provider?: string; type?: string; direction?: string; status?: string }>;
 }) {
-  const page = parseInt(searchParams.page || '1');
+  // Await searchParams in Next.js 15+
+  const params = await searchParams;
+  
+  const page = parseInt(params.page || '1');
   const filters = {
-    searchTerm: searchParams.search,
-    serviceProvider: searchParams.provider as any,
-    transactionType: searchParams.type as any,
-    transactionDirection: searchParams.direction as any,
-    status: searchParams.status as any,
+    searchTerm: params.search,
+    serviceProvider: params.provider as any,
+    transactionType: params.type as any,
+    transactionDirection: params.direction as any,
+    status: params.status as any,
   };
 
   const result = await getTransactions(page, 25, filters);
@@ -30,24 +33,27 @@ export default async function TransactionsPage({
         </div>
         <Link
           href="/transactions/new"
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-4 h-4" />
           New Transaction
         </Link>
       </div>
 
-      <SearchAndFilter />
-
-      <Suspense fallback={<div>Loading transactions...</div>}>
-        <TransactionList
-          transactions={result.transactions}
-          totalCount={result.totalCount}
-          currentPage={result.currentPage}
-          pageSize={result.pageSize}
-          totalPages={result.totalPages}
-        />
+      <Suspense fallback={<div>Loading filters...</div>}>
+        <SearchAndFilter />
       </Suspense>
+
+      {result.success ? (
+        <TransactionList 
+          transactions={result.data!.transactions} 
+          pagination={result.data!.pagination}
+        />
+      ) : (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
+          Error: {result.error}
+        </div>
+      )}
     </div>
   );
 }
