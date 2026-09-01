@@ -1,10 +1,10 @@
 ﻿-- ============================================================================
 -- COMPLETE DATABASE SETUP - ALL TABLES + RLS POLICIES
--- Run this ONCE to create all missing tables and apply RLS
+-- Version 2: Works with existing tables
 -- ============================================================================
 
 -- ============================================================================
--- PART 1: CREATE MISSING TABLES
+-- PART 1: CREATE MISSING TABLES (Skip if already exists)
 -- ============================================================================
 
 -- 1. System Settings Table
@@ -16,8 +16,7 @@ CREATE TABLE IF NOT EXISTS public.system_settings (
   description TEXT,
   is_public BOOLEAN DEFAULT false,
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  created_by UUID NOT NULL REFERENCES auth.users(id),
-  notes TEXT
+  updated_by UUID NOT NULL REFERENCES auth.users(id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_settings_key ON public.system_settings(setting_key);
@@ -39,8 +38,7 @@ CREATE TABLE IF NOT EXISTS public.products (
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   created_by UUID NOT NULL REFERENCES auth.users(id),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  created_by UUID NOT NULL REFERENCES auth.users(id),
-  notes TEXT
+  updated_by UUID NOT NULL REFERENCES auth.users(id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_products_category ON public.products(category);
@@ -63,24 +61,23 @@ CREATE TABLE IF NOT EXISTS public.transaction_audit_log (
 CREATE INDEX IF NOT EXISTS idx_transaction_audit_transaction_id ON public.transaction_audit_log(transaction_id);
 CREATE INDEX IF NOT EXISTS idx_transaction_audit_created_at ON public.transaction_audit_log(created_at DESC);
 
--- 4. Commission Rates Table
-CREATE TABLE IF NOT EXISTS public.commission_rates (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  transaction_type VARCHAR(20) UNIQUE NOT NULL CHECK (transaction_type IN ('local', 'international')),
-  rate DECIMAL(5,2) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  created_by UUID NOT NULL REFERENCES auth.users(id),
-  notes TEXT
-);
-
--- Insert default commission rates
-INSERT INTO public.commission_rates (transaction_type, rate, created_by, notes)
-SELECT 'local', 8.00, (SELECT id FROM auth.users LIMIT 1), 'Default local transaction commission rate'
-WHERE NOT EXISTS (SELECT 1 FROM public.commission_rates WHERE transaction_type = 'local');
-
-INSERT INTO public.commission_rates (transaction_type, rate, created_by, notes)
-SELECT 'international', 10.00, (SELECT id FROM auth.users LIMIT 1), 'Default international transaction commission rate'
-WHERE NOT EXISTS (SELECT 1 FROM public.commission_rates WHERE transaction_type = 'international');
+-- 4. Commission Rates Table (if it doesn't exist - otherwise skip)
+-- Note: Table may already exist with different schema, so we skip creation
+-- DO $$
+-- BEGIN
+--   IF NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'commission_rates') THEN
+--     CREATE TABLE public.commission_rates (
+--       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--       transaction_type VARCHAR(20) UNIQUE NOT NULL CHECK (transaction_type IN ('local', 'international')),
+--       rate DECIMAL(5,2) NOT NULL CHECK (rate >= 0 AND rate <= 100),
+--       effective_from TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+--       created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+--       created_by UUID NOT NULL REFERENCES auth.users(id),
+--       notes TEXT
+--     );
+--     CREATE INDEX idx_commission_rates_type ON public.commission_rates(transaction_type);
+--   END IF;
+-- END $$;
 
 -- ============================================================================
 -- PART 2: DROP EXISTING RLS POLICIES
@@ -143,6 +140,8 @@ DROP POLICY IF EXISTS "System can insert transaction audit logs" ON public.trans
 -- Drop existing policies for commission_rates
 DROP POLICY IF EXISTS "All users can view commission rates" ON public.commission_rates;
 DROP POLICY IF EXISTS "Admins can manage commission rates" ON public.commission_rates;
+DROP POLICY IF EXISTS "All authenticated users can view commission rates" ON public.commission_rates;
+DROP POLICY IF EXISTS "Only admins can modify commission rates" ON public.commission_rates;
 
 -- ============================================================================
 -- PART 3: ENABLE RLS ON ALL TABLES
@@ -334,7 +333,7 @@ CREATE POLICY "Admins can view all transaction audit logs" ON public.transaction
 CREATE POLICY "System can insert transaction audit logs" ON public.transaction_audit_log 
   FOR INSERT WITH CHECK (created_by = auth.uid());
 
--- Commission Rates
+-- Commission Rates (works with any existing schema)
 CREATE POLICY "All users can view commission rates" ON public.commission_rates 
   FOR SELECT USING (auth.uid() IS NOT NULL);
 
@@ -359,26 +358,31 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.system_settings TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.commission_rates TO authenticated;
 
 -- ============================================================================
--- PART 6: INSERT DEFAULT SETTINGS
+-- PART 6: INSERT DEFAULT SETTINGS (Only if tables are empty)
 -- ============================================================================
 
+-- System Settings
 INSERT INTO public.system_settings (setting_key, setting_value, setting_type, description, is_public, updated_by)
 SELECT 'commission_rate_local', '8', 'number', 'Commission rate for local transactions (%)', false, (SELECT id FROM auth.users LIMIT 1)
-WHERE NOT EXISTS (SELECT 1 FROM public.system_settings WHERE setting_key = 'commission_rate_local');
+WHERE NOT EXISTS (SELECT 1 FROM public.system_settings WHERE setting_key = 'commission_rate_local')
+AND EXISTS (SELECT 1 FROM auth.users LIMIT 1);
 
 INSERT INTO public.system_settings (setting_key, setting_value, setting_type, description, is_public, updated_by)
 SELECT 'commission_rate_international', '10', 'number', 'Commission rate for international transactions (%)', false, (SELECT id FROM auth.users LIMIT 1)
-WHERE NOT EXISTS (SELECT 1 FROM public.system_settings WHERE setting_key = 'commission_rate_international');
+WHERE NOT EXISTS (SELECT 1 FROM public.system_settings WHERE setting_key = 'commission_rate_international')
+AND EXISTS (SELECT 1 FROM auth.users LIMIT 1);
 
 INSERT INTO public.system_settings (setting_key, setting_value, setting_type, description, is_public, updated_by)
 SELECT 'low_stock_threshold_default', '10', 'number', 'Default low stock threshold for new products', false, (SELECT id FROM auth.users LIMIT 1)
-WHERE NOT EXISTS (SELECT 1 FROM public.system_settings WHERE setting_key = 'low_stock_threshold_default');
+WHERE NOT EXISTS (SELECT 1 FROM public.system_settings WHERE setting_key = 'low_stock_threshold_default')
+AND EXISTS (SELECT 1 FROM auth.users LIMIT 1);
 
 INSERT INTO public.system_settings (setting_key, setting_value, setting_type, description, is_public, updated_by)
 SELECT 'company_name', 'Define Horizon', 'string', 'Company name displayed throughout the system', true, (SELECT id FROM auth.users LIMIT 1)
-WHERE NOT EXISTS (SELECT 1 FROM public.system_settings WHERE setting_key = 'company_name');
+WHERE NOT EXISTS (SELECT 1 FROM public.system_settings WHERE setting_key = 'company_name')
+AND EXISTS (SELECT 1 FROM auth.users LIMIT 1);
 
 -- ============================================================================
--- COMPLETE! ALL TABLES CREATED AND RLS POLICIES APPLIED
+-- COMPLETE! RLS POLICIES APPLIED TO ALL TABLES
+-- Note: Commission rates table uses existing schema - policies work regardless
 -- ============================================================================
-
