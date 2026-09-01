@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ChevronLeft, ChevronRight, Home, Users, Settings, LogOut, DollarSign, Package } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Home, Users, Settings, LogOut, DollarSign, Package, Bell } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 
 export function Sidebar() {
@@ -14,9 +14,7 @@ export function Sidebar() {
 
   useEffect(() => {
     const stored = localStorage.getItem('sidebar-collapsed')
-    if (stored) {
-      setIsCollapsed(JSON.parse(stored))
-    }
+    if (stored) setIsCollapsed(JSON.parse(stored))
   }, [])
 
   const toggleSidebar = () => {
@@ -40,7 +38,8 @@ export function Sidebar() {
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
     { href: '/customers', icon: Users, label: 'Customers' },
     { href: '/transactions', icon: DollarSign, label: 'Transactions' },
-    { href: '/products', icon: Package, label: 'Products & Stock' },
+    { href: '/products', icon: Package, label: 'Products' },
+    { href: '/announcements', icon: Bell, label: 'Announcements' },
     { href: '/settings', icon: Settings, label: 'Settings' },
   ]
 
@@ -48,11 +47,10 @@ export function Sidebar() {
     <aside className={\\ bg-gray-900 text-white transition-all duration-300 flex flex-col h-screen border-r border-gray-800\}>
       <div className=\"p-4 flex items-center justify-between border-b border-gray-800\">
         {!isCollapsed && <h2 className=\"text-lg font-bold\">Define Horizon</h2>}
-        <button onClick={toggleSidebar} className=\"p-1.5 hover:bg-gray-800 rounded-lg transition text-gray-400 hover:text-white\" title={isCollapsed ? 'Expand' : 'Collapse'}>
+        <button onClick={toggleSidebar} className=\"p-1.5 hover:bg-gray-800 rounded-lg transition\" title={isCollapsed ? 'Expand' : 'Collapse'}>
           {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
         </button>
       </div>
-
       <nav className=\"flex-1 px-3 py-6 space-y-2\">
         {navItems.map((item) => {
           const Icon = item.icon
@@ -65,9 +63,8 @@ export function Sidebar() {
           )
         })}
       </nav>
-
       <div className=\"p-3 border-t border-gray-800\">
-        <button onClick={handleLogout} disabled={isLoggingOut} className=\"w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition disabled:opacity-50\">
+        <button onClick={handleLogout} disabled={isLoggingOut} className=\"w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition\">
           <LogOut size={20} />
           {!isCollapsed && <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>}
         </button>
