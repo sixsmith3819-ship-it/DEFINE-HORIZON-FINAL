@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS public.system_settings (
   description TEXT,
   is_public BOOLEAN DEFAULT false,
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  updated_by UUID NOT NULL REFERENCES auth.users(id)
+  created_by UUID NOT NULL REFERENCES auth.users(id),
+  notes TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_settings_key ON public.system_settings(setting_key);
@@ -38,7 +39,8 @@ CREATE TABLE IF NOT EXISTS public.products (
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   created_by UUID NOT NULL REFERENCES auth.users(id),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  updated_by UUID NOT NULL REFERENCES auth.users(id)
+  created_by UUID NOT NULL REFERENCES auth.users(id),
+  notes TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_products_category ON public.products(category);
@@ -67,16 +69,17 @@ CREATE TABLE IF NOT EXISTS public.commission_rates (
   transaction_type VARCHAR(20) UNIQUE NOT NULL CHECK (transaction_type IN ('local', 'international')),
   rate DECIMAL(5,2) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  updated_by UUID NOT NULL REFERENCES auth.users(id)
+  created_by UUID NOT NULL REFERENCES auth.users(id),
+  notes TEXT
 );
 
 -- Insert default commission rates
-INSERT INTO public.commission_rates (transaction_type, rate, updated_by)
-SELECT 'local', 8.00, (SELECT id FROM auth.users LIMIT 1)
+INSERT INTO public.commission_rates (transaction_type, rate, created_by, notes)
+SELECT 'local', 8.00, (SELECT id FROM auth.users LIMIT 1), 'Default local transaction commission rate'
 WHERE NOT EXISTS (SELECT 1 FROM public.commission_rates WHERE transaction_type = 'local');
 
-INSERT INTO public.commission_rates (transaction_type, rate, updated_by)
-SELECT 'international', 10.00, (SELECT id FROM auth.users LIMIT 1)
+INSERT INTO public.commission_rates (transaction_type, rate, created_by, notes)
+SELECT 'international', 10.00, (SELECT id FROM auth.users LIMIT 1), 'Default international transaction commission rate'
 WHERE NOT EXISTS (SELECT 1 FROM public.commission_rates WHERE transaction_type = 'international');
 
 -- ============================================================================
@@ -378,3 +381,4 @@ WHERE NOT EXISTS (SELECT 1 FROM public.system_settings WHERE setting_key = 'comp
 -- ============================================================================
 -- COMPLETE! ALL TABLES CREATED AND RLS POLICIES APPLIED
 -- ============================================================================
+
