@@ -6,13 +6,13 @@ export enum ProductCategory {
   Laptop = 'Laptop',
   Phone = 'Phone',
   Router = 'Router',
-  LaptopCharger = 'Laptop Charger',
+  Charger = 'Charger',
   Accessory = 'Accessory',
 }
 
 export enum ProductStatus {
   Active = 'active',
-  Inactive = 'inactive',
+  Discontinued = 'discontinued',
 }
 
 export enum MovementType {
@@ -79,4 +79,8 @@ export interface ProductStats {
   lowStock: number;
   outOfStock: number;
   totalValue: number;
+}
+
+export interface ValidationErrors {
+  [key: string]: string[];
 }

@@ -44,27 +44,27 @@ export function Sidebar() {
   ]
 
   return (
-    <aside className={\\ bg-gray-900 text-white transition-all duration-300 flex flex-col h-screen border-r border-gray-800\}>
-      <div className=\"p-4 flex items-center justify-between border-b border-gray-800\">
-        {!isCollapsed && <h2 className=\"text-lg font-bold\">Define Horizon</h2>}
-        <button onClick={toggleSidebar} className=\"p-1.5 hover:bg-gray-800 rounded-lg transition\" title={isCollapsed ? 'Expand' : 'Collapse'}>
+    <aside className={`${isCollapsed ? 'w-20' : 'w-64'} bg-gray-900 text-white transition-all duration-300 flex flex-col h-screen border-r border-gray-800`}>
+      <div className="p-4 flex items-center justify-between border-b border-gray-800">
+        {!isCollapsed && <h2 className="text-lg font-bold">Define Horizon</h2>}
+        <button onClick={toggleSidebar} className="p-1.5 hover:bg-gray-800 rounded-lg transition" title={isCollapsed ? 'Expand' : 'Collapse'}>
           {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
         </button>
       </div>
-      <nav className=\"flex-1 px-3 py-6 space-y-2\">
+      <nav className="flex-1 px-3 py-6 space-y-2">
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname.startsWith(item.href)
           return (
-            <Link key={item.href} href={item.href} className={\lex items-center gap-3 px-4 py-3 rounded-lg transition \\}>
+            <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-4 py-3 rounded-lg transition ${isActive ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'}`}>
               <Icon size={20} />
               {!isCollapsed && <span>{item.label}</span>}
             </Link>
           )
         })}
       </nav>
-      <div className=\"p-3 border-t border-gray-800\">
-        <button onClick={handleLogout} disabled={isLoggingOut} className=\"w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition\">
+      <div className="p-3 border-t border-gray-800">
+        <button onClick={handleLogout} disabled={isLoggingOut} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition">
           <LogOut size={20} />
           {!isCollapsed && <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>}
         </button>
