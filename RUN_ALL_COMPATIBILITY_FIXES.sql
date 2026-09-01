@@ -9,7 +9,7 @@
 -- ============================================================================
 
 -- Safely rename phone_number to phone (only if phone_number exists)
-DO ${'$'}$
+DO $$
 BEGIN
   IF EXISTS (
     SELECT 1 FROM information_schema.columns 
@@ -20,10 +20,10 @@ BEGIN
   ELSE
     RAISE NOTICE 'phone_number does not exist, skipping rename';
   END IF;
-END ${'$'}$;
+END $$;
 
 -- Add first_name (only if it doesn't exist)
-DO ${'$'}$
+DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns 
@@ -38,10 +38,10 @@ BEGIN
   ELSE
     RAISE NOTICE 'first_name already exists';
   END IF;
-END ${'$'}$;
+END $$;
 
 -- Add last_name (only if it doesn't exist)
-DO ${'$'}$
+DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns 
@@ -54,10 +54,10 @@ BEGIN
   ELSE
     RAISE NOTICE 'last_name already exists';
   END IF;
-END ${'$'}$;
+END $$;
 
 -- Add business_name (only if it doesn't exist)
-DO ${'$'}$
+DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns 
@@ -72,7 +72,7 @@ BEGIN
   ELSE
     RAISE NOTICE 'business_name already exists';
   END IF;
-END ${'$'}$;
+END $$;
 
 -- Create user_roles view (drop first if exists)
 DROP VIEW IF EXISTS user_roles CASCADE;
@@ -90,7 +90,7 @@ CREATE INDEX IF NOT EXISTS idx_customers_phone ON public.customers(phone);
 -- ============================================================================
 
 -- Add message column (only if it doesn't exist)
-DO ${'$'}$
+DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns 
@@ -103,7 +103,7 @@ BEGIN
   ELSE
     RAISE NOTICE 'message column already exists in announcements';
   END IF;
-END ${'$'}$;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_announcements_message ON public.announcements(message);
 
