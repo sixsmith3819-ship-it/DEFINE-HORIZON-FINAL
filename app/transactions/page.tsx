@@ -10,7 +10,6 @@ export default async function TransactionsPage({
 }: {
   searchParams: Promise<{ page?: string; search?: string; provider?: string; type?: string; direction?: string; status?: string }>;
 }) {
-  // Await searchParams in Next.js 15+
   const params = await searchParams;
   
   const page = parseInt(params.page || '1');
@@ -23,6 +22,29 @@ export default async function TransactionsPage({
   };
 
   const result = await getTransactions(page, 25, filters);
+
+  if (!result.success || result.error) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Transactions</h1>
+            <p className="text-sm text-gray-600">Manage financial transactions</p>
+          </div>
+          <Link
+            href="/transactions/new"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            New Transaction
+          </Link>
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
+          Error: {result.error || 'Failed to load transactions'}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -44,16 +66,15 @@ export default async function TransactionsPage({
         <SearchAndFilter />
       </Suspense>
 
-      {result.success ? (
-        <TransactionList 
-          transactions={result.data!.transactions} 
-          pagination={result.data!.pagination}
-        />
-      ) : (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
-          Error: {result.error}
-        </div>
-      )}
+      <TransactionList 
+        transactions={result.transactions} 
+        pagination={{
+          totalCount: result.totalCount,
+          pageSize: result.pageSize,
+          currentPage: result.currentPage,
+          totalPages: result.totalPages,
+        }}
+      />
     </div>
   );
 }
