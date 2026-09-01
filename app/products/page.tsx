@@ -1,6 +1,7 @@
 ﻿import Link from 'next/link';
-import { Plus, Package } from 'lucide-react';
+import { Plus, Package, Edit, Trash2, TrendingUp } from 'lucide-react';
 import { getProducts, getProductStats } from '@/lib/actions/products';
+import { DeleteProductButton } from '@/components/products/DeleteProductButton';
 
 export default async function ProductsPage() {
   const result = await getProducts();
@@ -68,6 +69,7 @@ export default async function ProductsPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -84,6 +86,25 @@ export default async function ProductsPage() {
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${stockStatus.color}`}>
                       {stockStatus.label}
                     </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/products/${product.id}/adjust-stock`}
+                        className="p-1.5 text-green-600 hover:bg-green-50 rounded transition"
+                        title="Adjust Stock"
+                      >
+                        <TrendingUp className="w-4 h-4" />
+                      </Link>
+                      <Link
+                        href={`/products/${product.id}/edit`}
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition"
+                        title="Edit"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Link>
+                      <DeleteProductButton productId={product.id} productName={product.productName} />
+                    </div>
                   </td>
                 </tr>
               );
