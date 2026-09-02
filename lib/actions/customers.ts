@@ -388,6 +388,8 @@ export async function createCustomer(
   data: CustomerFormData
 ): Promise<{ success: boolean; customerId?: string; error?: string; validationErrors?: ValidationErrors }> {
   try {
+    console.log('[createCustomer] Starting with data:', { customerType: data.customerType, phone: data.phone });
+    
     const supabase = await createServerClient();
 
     const {
@@ -395,44 +397,57 @@ export async function createCustomer(
     } = await supabase.auth.getUser();
 
     if (!user) {
+      console.log('[createCustomer] No user found');
       return { success: false, error: 'Unauthorized' };
     }
 
-    // Check authorization
-    const { data: userRole } = await supabase
-      .from('user_roles')
+    // Check authorization - query profiles directly
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
       .select('role')
-      .eq('user_id', user.id)
+      .eq('id', user.id)
       .single();
 
-    if (userRole?.role !== 'admin' && userRole?.role !== 'manager') {
+    console.log('[createCustomer] Profile check:', { role: profile?.role, error: profileError });
+
+    if (profile?.role !== 'admin' && profile?.role !== 'manager') {
       return { success: false, error: 'Permission denied' };
     }
 
     // Validate input
     const errors = validateCustomerFormData(data);
     if (hasValidationErrors(errors)) {
+      console.log('[createCustomer] Validation errors:', errors);
       return { success: false, validationErrors: errors };
     }
 
-    // Create customer
+    // Build customer_name based on customer type
+    let customerName: string;
+    if (data.customerType === 'individual') {
+      customerName = ((data.firstName || '') + ' ' + (data.lastName || '')).trim();
+      if (!customerName) customerName = 'Unnamed Customer';
+    } else {
+      customerName = data.businessName || 'Unnamed Business';
+    }
+
+    console.log('[createCustomer] Built customer name:', customerName);
+
+    // Create customer with ONLY fields that exist in database
     const customerData = {
+      customer_name: customerName,
       customer_type: data.customerType,
-      status: 'active',
-      email: data.email,
       phone: data.phone,
-      address: data.address,
-      first_name: data.firstName || null,
-      last_name: data.lastName || null,
-      date_of_birth: data.dateOfBirth || null,
-      business_name: data.businessName || null,
-      contact_person: data.contactPerson || null,
-      business_registration_number: data.businessRegistrationNumber || null,
-      tax_id: data.taxId || null,
-      website: data.website || null,
+      email: data.email || null,
+      id_number: null,
+      address: data.address || null,
+      status: 'active',
+      assigned_employee_id: null,
+      notes: null,
       created_by: user.id,
       updated_by: user.id,
     };
+
+    console.log('[createCustomer] Inserting customer:', customerData);
 
     const { data: createdCustomer, error: createError } = await supabase
       .from('customers')
@@ -440,22 +455,17 @@ export async function createCustomer(
       .select()
       .single();
 
+    console.log('[createCustomer] Insert result:', { success: !!createdCustomer, error: createError?.message });
+
     if (createError || !createdCustomer) {
+      console.error('[createCustomer] Insert failed:', createError);
       return { success: false, error: createError?.message || 'Failed to create customer' };
     }
 
-    // Create audit log entry
-    await createAuditLogEntry(
-      createdCustomer.id,
-      OperationType.Create,
-      user.id,
-      undefined,
-      { customerType: data.customerType }
-    );
-
+    console.log('[createCustomer] Customer created successfully:', createdCustomer.id);
     return { success: true, customerId: createdCustomer.id };
   } catch (error) {
-    console.error('Error in createCustomer:', error);
+    console.error('[createCustomer] Exception:', error);
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }

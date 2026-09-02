@@ -1,4 +1,4 @@
-﻿-- ============================================================================
+-- ============================================================================
 -- MASTER COMPATIBILITY SCRIPT (SAFE VERSION)
 -- Run this ONE script to fix ALL schema mismatches
 -- Uses IF EXISTS checks to avoid errors
@@ -74,11 +74,14 @@ BEGIN
   END IF;
 END $$;
 
--- Create user_roles view (drop first if exists)
-DROP VIEW IF EXISTS user_roles CASCADE;
-CREATE OR REPLACE VIEW user_roles AS
+-- Create user_roles view WITHOUT SECURITY DEFINER (drop first if exists)
+-- Using security_invoker=true to enforce RLS based on querying user, not view creator
+DROP VIEW IF EXISTS public.user_roles CASCADE;
+CREATE VIEW public.user_roles
+WITH (security_invoker=true)
+AS
 SELECT id as user_id, role, is_active, created_at FROM public.profiles;
-GRANT SELECT ON user_roles TO authenticated, service_role;
+GRANT SELECT ON public.user_roles TO authenticated, service_role;
 
 -- Add indexes (if they don't exist)
 CREATE INDEX IF NOT EXISTS idx_customers_first_name ON public.customers(first_name);
