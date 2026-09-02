@@ -2,7 +2,7 @@
 
 import { createServerClient } from '@/lib/supabase-server';
 import { getCustomerDetail, getCustomerAuditLog, softDeleteCustomer, reactivateCustomer, assignCustomerToEmployee, addCustomerNote, deleteCustomerNote } from '@/lib/actions/customers';
-import { Customer, CustomerInteraction, AuditLogEntry, CustomerStatus, CustomerType } from '@/lib/types/customer';
+import { Customer, CustomerDetail, CustomerInteraction, AuditLogEntry, CustomerStatus, CustomerType } from '@/lib/types/customer';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
@@ -105,7 +105,7 @@ async function CustomerDetailContent({ customerId }: { customerId: string }) {
   const canEdit = await checkPermission(user.id, 'edit', { customerId });
   const canSoftDelete = await checkPermission(user.id, 'delete', { customerId });
   const canAssign = await checkPermission(user.id, 'assign', { customerId });
-  const canAddNote = await checkPermission(user.id, 'add_note', { customerId, assignedEmployeeId: customer.assignedEmployeeId });
+  const canAddNote = await checkPermission(user.id, 'add_note', { customerId, assignedEmployeeId: customer.assignedEmployeeId ?? undefined });
   const canViewAudit = await checkPermission(user.id, 'view_audit_log', {});
 
   // Get customer type for display

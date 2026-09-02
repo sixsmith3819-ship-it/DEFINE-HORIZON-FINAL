@@ -35,28 +35,33 @@ export enum OperationType {
 export interface BaseCustomer {
   id: string;
   customerType: CustomerType;
-  customerName: string;
   status: CustomerStatus;
-  email: string | null;
-  phoneNumber: string;
-  idNumber: string | null;
-  address: string | null;
+  email: string;
+  phone: string;
+  address: string;
   assignedEmployeeId: string | null;
-  notes: string | null;
   createdAt: string;
   createdBy: string;
   updatedAt: string;
-  updatedBy: string | null;
+  updatedBy: string;
 }
 
 // Individual Customer Interface
 export interface IndividualCustomer extends BaseCustomer {
   customerType: CustomerType.Individual;
+  firstName: string;
+  lastName: string;
+  dateOfBirth?: string;
 }
 
 // Business Customer Interface
 export interface BusinessCustomer extends BaseCustomer {
   customerType: CustomerType.Business;
+  businessName: string;
+  contactPerson: string;
+  businessRegistrationNumber: string;
+  taxId?: string;
+  website?: string;
 }
 
 // Discriminated Union for Customer
@@ -66,10 +71,15 @@ export type Customer = IndividualCustomer | BusinessCustomer;
 export interface CustomerInteraction {
   id: string;
   customerId: string;
-  interactionType: string;
-  notes: string;
+  interactionType: InteractionType;
+  content: string;
+  isDeleted: boolean;
   createdAt: string;
   createdBy: string;
+  updatedAt: string;
+  updatedBy: string;
+  deletedAt?: string;
+  deletedBy?: string;
 }
 
 // Audit Log Entry Interface
@@ -89,21 +99,33 @@ export interface AuditLogEntry {
 export interface CustomerDetail extends BaseCustomer {
   interactions: CustomerInteraction[];
   auditLog: AuditLogEntry[];
+  // Customer type specific fields (combined for union flexibility)
+  customerType: CustomerType;
+  firstName?: string;
+  lastName?: string;
+  dateOfBirth?: string;
+  businessName?: string;
+  contactPerson?: string;
+  businessRegistrationNumber?: string;
+  taxId?: string;
+  website?: string;
 }
 
 // Customer Form Data for Create/Update
 export interface CustomerFormData {
   customerType: CustomerType;
-  customerName: string;
-  email?: string;
-  phoneNumber: string;
-  idNumber?: string;
-  address?: string;
-  notes?: string;
+  firstName?: string;
+  lastName?: string;
+  dateOfBirth?: string;
+  businessName?: string;
+  contactPerson?: string;
+  businessRegistrationNumber?: string;
+  taxId?: string;
+  website?: string;
+  email: string;
+  phone: string;
+  address: string;
 }
-
-// Validation Errors
-export type ValidationErrors = Record<string, string>;
 
 // Customer Filters
 export interface CustomerFilters {
@@ -140,11 +162,16 @@ export interface ValidationError {
 // Validation Errors Object
 export interface ValidationErrors {
   email?: string;
-  phoneNumber?: string;
-  customerName?: string;
-  idNumber?: string;
+  phone?: string;
+  firstName?: string;
+  lastName?: string;
+  dateOfBirth?: string;
+  businessName?: string;
+  contactPerson?: string;
+  businessRegistrationNumber?: string;
+  taxId?: string;
+  website?: string;
   address?: string;
-  notes?: string;
   [key: string]: string | undefined;
 }
 

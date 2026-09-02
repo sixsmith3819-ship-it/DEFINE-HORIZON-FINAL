@@ -31,6 +31,10 @@ const operationColors: Record<OperationType, { badge: string; dot: string }> = {
     badge: 'bg-orange-100 text-orange-800 border border-orange-300',
     dot: 'bg-orange-500',
   },
+  [OperationType.Action]: {
+    badge: 'bg-purple-100 text-purple-800 border border-purple-300',
+    dot: 'bg-purple-500',
+  },
 };
 
 // Format date in human-readable format
