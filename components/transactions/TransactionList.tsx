@@ -6,10 +6,12 @@ import { useRouter } from 'next/navigation';
 
 interface TransactionListProps {
   transactions: TransactionWithDetails[];
-  pagination.totalCount: number;
-  pagination.currentPage: number;
-  pagination.pageSize: number;
-  pagination.totalPages: number;
+  pagination: {
+    totalCount: number;
+    currentPage: number;
+    pageSize: number;
+    totalPages: number;
+  };
 }
 
 export default function TransactionList({ transactions, pagination }: TransactionListProps) {
