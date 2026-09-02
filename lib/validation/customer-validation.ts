@@ -10,9 +10,9 @@ import { CustomerFormData, CustomerType, ValidationError, ValidationErrors } fro
  * @param email Email address to validate
  * @returns Validation result with optional error message
  */
-export function validateEmail(email: string): ValidationError {
+export function validateEmail(email?: string): ValidationError {
   if (!email || email.trim() === '') {
-    return { valid: false, error: 'Email is required' };
+    return { valid: true }; // Email is optional
   }
 
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -25,16 +25,16 @@ export function validateEmail(email: string): ValidationError {
 
 /**
  * Validates phone number format
- * @param phone Phone number to validate
+ * @param phoneNumber Phone number to validate
  * @returns Validation result with optional error message
  */
-export function validatePhone(phone: string): ValidationError {
-  if (!phone || phone.trim() === '') {
-    return { valid: false, error: 'Phone is required' };
+export function validatePhoneNumber(phoneNumber: string): ValidationError {
+  if (!phoneNumber || phoneNumber.trim() === '') {
+    return { valid: false, error: 'Phone number is required' };
   }
 
   const phonePattern = /^[\d\s\-()]{10,15}$/;
-  if (!phonePattern.test(phone)) {
+  if (!phonePattern.test(phoneNumber)) {
     return { valid: false, error: 'Phone must contain 10-15 characters' };
   }
 
@@ -42,35 +42,34 @@ export function validatePhone(phone: string): ValidationError {
 }
 
 /**
- * Validates name fields (first name, last name, etc.)
- * @param name Name to validate
- * @param fieldName Display name of the field
+ * Validates customer name
+ * @param customerName Name to validate
  * @returns Validation result with optional error message
  */
-export function validateName(name: string, fieldName: string): ValidationError {
-  if (!name || name.trim() === '') {
-    return { valid: false, error: `${fieldName} is required` };
+export function validateCustomerName(customerName: string): ValidationError {
+  if (!customerName || customerName.trim() === '') {
+    return { valid: false, error: 'Customer name is required' };
   }
 
-  if (name.length > 100) {
-    return { valid: false, error: `${fieldName} cannot exceed 100 characters` };
+  if (customerName.length > 200) {
+    return { valid: false, error: 'Customer name cannot exceed 200 characters' };
   }
 
   return { valid: true };
 }
 
 /**
- * Validates business registration number
- * @param registration Business registration number to validate
+ * Validates ID number
+ * @param idNumber ID number to validate
  * @returns Validation result with optional error message
  */
-export function validateBusinessRegistration(registration: string): ValidationError {
-  if (!registration || registration.trim() === '') {
-    return { valid: false, error: 'Business registration is required' };
+export function validateIdNumber(idNumber?: string): ValidationError {
+  if (!idNumber || idNumber.trim() === '') {
+    return { valid: true }; // ID number is optional
   }
 
-  if (registration.length > 100) {
-    return { valid: false, error: 'Business registration cannot exceed 100 characters' };
+  if (idNumber.length > 50) {
+    return { valid: false, error: 'ID number cannot exceed 50 characters' };
   }
 
   return { valid: true };
@@ -81,9 +80,13 @@ export function validateBusinessRegistration(registration: string): ValidationEr
  * @param address Address to validate
  * @returns Validation result with optional error message
  */
-export function validateAddress(address: string): ValidationError {
+export function validateAddress(address?: string): ValidationError {
   if (!address || address.trim() === '') {
-    return { valid: false, error: 'Address is required' };
+    return { valid: true }; // Address is optional
+  }
+
+  if (address.length > 500) {
+    return { valid: false, error: 'Address cannot exceed 500 characters' };
   }
 
   return { valid: true };
@@ -98,81 +101,34 @@ export function validateAddress(address: string): ValidationError {
 export function validateCustomerFormData(data: CustomerFormData): ValidationErrors {
   const errors: ValidationErrors = {};
 
-  // Validate email
+  // Validate customer name (required)
+  const customerNameValidation = validateCustomerName(data.customerName);
+  if (!customerNameValidation.valid) {
+    errors.customerName = customerNameValidation.error;
+  }
+
+  // Validate phone number (required)
+  const phoneValidation = validatePhoneNumber(data.phoneNumber);
+  if (!phoneValidation.valid) {
+    errors.phoneNumber = phoneValidation.error;
+  }
+
+  // Validate email (optional)
   const emailValidation = validateEmail(data.email);
   if (!emailValidation.valid) {
     errors.email = emailValidation.error;
   }
 
-  // Validate phone
-  const phoneValidation = validatePhone(data.phone);
-  if (!phoneValidation.valid) {
-    errors.phone = phoneValidation.error;
+  // Validate ID number (optional)
+  const idNumberValidation = validateIdNumber(data.idNumber);
+  if (!idNumberValidation.valid) {
+    errors.idNumber = idNumberValidation.error;
   }
 
-  // Validate address
+  // Validate address (optional)
   const addressValidation = validateAddress(data.address);
   if (!addressValidation.valid) {
     errors.address = addressValidation.error;
-  }
-
-  // Customer type specific validations
-  if (data.customerType === CustomerType.Individual) {
-    // Validate first name
-    if (data.firstName !== undefined) {
-      const firstNameValidation = validateName(data.firstName, 'First name');
-      if (!firstNameValidation.valid) {
-        errors.firstName = firstNameValidation.error;
-      }
-    } else {
-      errors.firstName = 'First name is required';
-    }
-
-    // Validate last name
-    if (data.lastName !== undefined) {
-      const lastNameValidation = validateName(data.lastName, 'Last name');
-      if (!lastNameValidation.valid) {
-        errors.lastName = lastNameValidation.error;
-      }
-    } else {
-      errors.lastName = 'Last name is required';
-    }
-
-    // Date of birth is optional for individuals
-    // Could add additional validation if needed (e.g., valid date format, not in future)
-  } else if (data.customerType === CustomerType.Business) {
-    // Validate business name
-    if (data.businessName !== undefined) {
-      const businessNameValidation = validateName(data.businessName, 'Business name');
-      if (!businessNameValidation.valid) {
-        errors.businessName = businessNameValidation.error;
-      }
-    } else {
-      errors.businessName = 'Business name is required';
-    }
-
-    // Validate contact person
-    if (data.contactPerson !== undefined) {
-      const contactPersonValidation = validateName(data.contactPerson, 'Contact person');
-      if (!contactPersonValidation.valid) {
-        errors.contactPerson = contactPersonValidation.error;
-      }
-    } else {
-      errors.contactPerson = 'Contact person is required';
-    }
-
-    // Validate business registration
-    if (data.businessRegistrationNumber !== undefined) {
-      const regValidation = validateBusinessRegistration(data.businessRegistrationNumber);
-      if (!regValidation.valid) {
-        errors.businessRegistrationNumber = regValidation.error;
-      }
-    } else {
-      errors.businessRegistrationNumber = 'Business registration is required';
-    }
-
-    // Tax ID is optional for businesses
-    // Website is optional for businesses
   }
 
   return errors;

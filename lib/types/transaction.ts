@@ -25,46 +25,36 @@ export enum TransactionDirection {
 export enum TransactionStatus {
   Pending = 'pending',
   Completed = 'completed',
+  Failed = 'failed',
   Cancelled = 'cancelled',
 }
 
 // Base Transaction Interface
 export interface Transaction {
   id: string;
-  transactionNumber: string;
-  customerId: string;
-  serviceProvider: ServiceProvider;
   transactionType: TransactionType;
-  transactionDirection: TransactionDirection;
+  customerId: string;
+  serviceProvider: string;
   amount: number;
-  currency: string;
-  commissionRate: number;
-  commissionAmount: number;
-  totalAmount: number;
+  commissionRate: number | null;
+  commissionAmount: number | null;
+  paymentMethod: string;
+  referenceNumber: string | null;
   status: TransactionStatus;
-  notes?: string;
+  notes: string | null;
   createdAt: string;
   createdBy: string;
   updatedAt: string;
-  updatedBy: string;
-  completedAt?: string;
-  completedBy?: string;
-  cancelledAt?: string;
-  cancelledBy?: string;
-  cancellationReason?: string;
 }
 
 // Transaction with customer and employee details
 export interface TransactionWithDetails extends Transaction {
   customer: {
     id: string;
-    firstName?: string;
-    lastName?: string;
-    businessName?: string;
+    customerName: string;
     customerType: string;
-    email: string;
-    phone: string;
-    nationalId?: string;
+    email: string | null;
+    phoneNumber: string;
   };
   createdByEmployee: {
     id: string;
@@ -76,11 +66,10 @@ export interface TransactionWithDetails extends Transaction {
 // Transaction Form Data
 export interface TransactionFormData {
   customerId: string;
-  serviceProvider: ServiceProvider;
+  serviceProvider: string;
   transactionType: TransactionType;
-  transactionDirection: TransactionDirection;
   amount: string;
-  currency: string;
+  paymentMethod: string;
   notes?: string;
 }
 
@@ -95,9 +84,8 @@ export interface TransactionFilters {
   searchTerm?: string;
   dateFrom?: string;
   dateTo?: string;
-  serviceProvider?: ServiceProvider | 'all';
+  serviceProvider?: string | 'all';
   transactionType?: TransactionType | 'all';
-  transactionDirection?: TransactionDirection | 'all';
   status?: TransactionStatus | 'all';
   employeeId?: string | 'all';
 }

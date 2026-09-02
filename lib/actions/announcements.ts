@@ -18,11 +18,12 @@ export async function createAnnouncement(data: AnnouncementFormData): Promise<{ 
 
     const { data: announcement, error } = await supabase.from('announcements').insert({
       title: data.title,
-      message: data.message,
+      content: data.content,
       status: data.status,
+      priority: data.priority || 'medium',
+      publish_date: data.publishDate || null,
       expiry_date: data.expiryDate || null,
       created_by: user.id,
-      updated_by: user.id,
     }).select('id').single();
 
     if (error) throw error;
@@ -52,13 +53,14 @@ export async function getAnnouncements(): Promise<{ success: boolean; announceme
     const announcements = (data || []).map((a: any) => ({
       id: a.id,
       title: a.title,
-      message: a.message,
+      content: a.content,
       status: a.status,
+      priority: a.priority,
+      publishDate: a.publish_date,
       expiryDate: a.expiry_date,
       createdAt: a.created_at,
       createdBy: a.created_by,
       updatedAt: a.updated_at,
-      updatedBy: a.updated_by,
       author: {
         id: a.profiles.id,
         fullName: a.profiles.full_name || a.profiles.email,
@@ -81,7 +83,7 @@ export async function updateAnnouncementStatus(id: string, status: AnnouncementS
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
     if (!profile || profile.role !== 'admin') return { success: false, error: 'Admin only' };
 
-    const { error } = await supabase.from('announcements').update({ status, updated_by: user.id }).eq('id', id);
+    const { error } = await supabase.from('announcements').update({ status }).eq('id', id);
     if (error) throw error;
 
     return { success: true };

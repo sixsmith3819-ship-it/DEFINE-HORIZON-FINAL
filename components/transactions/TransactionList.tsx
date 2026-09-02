@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import { TransactionWithDetails, TransactionStatus } from '@/lib/types/transaction';
@@ -6,13 +6,13 @@ import { useRouter } from 'next/navigation';
 
 interface TransactionListProps {
   transactions: TransactionWithDetails[];
-  totalCount: number;
-  currentPage: number;
-  pageSize: number;
-  totalPages: number;
+  pagination.totalCount: number;
+  pagination.currentPage: number;
+  pagination.pageSize: number;
+  pagination.totalPages: number;
 }
 
-export default function TransactionList({ transactions, totalCount, currentPage, totalPages }: TransactionListProps) {
+export default function TransactionList({ transactions, pagination }: TransactionListProps) {
   const router = useRouter();
 
   const getStatusBadge = (status: TransactionStatus) => {
@@ -87,26 +87,26 @@ export default function TransactionList({ transactions, totalCount, currentPage,
         </table>
       </div>
 
-      {totalPages > 1 && (
+      {pagination.totalPages > 1 && (
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
           <div className="text-sm text-gray-700">
-            Showing {transactions.length} of {totalCount} transactions
+            Showing {transactions.length} of {pagination.totalCount} transactions
           </div>
           <div className="flex gap-2">
-            {currentPage > 1 && (
+            {pagination.currentPage > 1 && (
               <Link
-                href={`?page=${currentPage - 1}`}
+                href={`?page=${pagination.currentPage - 1}`}
                 className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
               >
                 Previous
               </Link>
             )}
             <span className="px-4 py-2 text-sm">
-              Page {currentPage} of {totalPages}
+              Page {pagination.currentPage} of {pagination.totalPages}
             </span>
-            {currentPage < totalPages && (
+            {pagination.currentPage < pagination.totalPages && (
               <Link
-                href={`?page=${currentPage + 1}`}
+                href={`?page=${pagination.currentPage + 1}`}
                 className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
               >
                 Next
