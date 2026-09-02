@@ -64,7 +64,7 @@ export default function TransactionList({ transactions, pagination }: Transactio
                   {new Date(txn.createdAt).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {txn.customer.businessName || `${txn.customer.firstName} ${txn.customer.lastName}`}
+                  {(txn.customer as any).businessName || `${(txn.customer as any).firstName || ""} ${(txn.customer as any).lastName || ""}`.trim() || "Unknown Customer"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {txn.serviceProvider}

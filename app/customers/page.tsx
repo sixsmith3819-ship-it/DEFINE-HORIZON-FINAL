@@ -1,7 +1,9 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { getCustomers } from '@/lib/actions/customers';
 import { Customer, CustomerStatus, CustomerType, CustomerFilters, SortField } from '@/lib/types/customer';
 import Link from 'next/link';
@@ -32,7 +34,7 @@ function LoadingSkeleton() {
   );
 }
 
-export default function CustomersPage() {
+function CustomersPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -458,5 +460,15 @@ export default function CustomersPage() {
         )}
       </div>
     </div>
+  );
+
+}
+
+// Wrap in Suspense to handle useSearchParams
+export default function CustomersPage() {
+  return (
+    <Suspense fallback={<div className="p-8"><div className="max-w-7xl mx-auto"><LoadingSkeleton /></div></div>}>
+      <CustomersPageInner />
+    </Suspense>
   );
 }
