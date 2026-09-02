@@ -33,7 +33,7 @@ export function validatePhone(phone: string): ValidationError {
     return { valid: false, error: 'Phone is required' };
   }
 
-  const phonePattern = /^[\d\s\-()]{10,15}$/;
+  const phonePattern = /^[\+]?[\d\s\-()]{10,15}$/;
   if (!phonePattern.test(phone)) {
     return { valid: false, error: 'Phone must contain 10-15 characters' };
   }

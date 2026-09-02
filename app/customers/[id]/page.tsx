@@ -432,9 +432,9 @@ async function CustomerDetailContent({ customerId }: { customerId: string }) {
 export default async function CustomerDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const customerId = params.id;
+  const { id: customerId } = await params;
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
