@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Transaction Validation Functions
  * Validates transaction form data and calculates commissions
  */
@@ -13,38 +13,33 @@ export function validateTransactionFormData(data: TransactionFormData): Validati
 
   // Required fields
   if (!data.customerId) {
-    errors.customerId = ['Customer is required'];
+    errors.customerId = 'Customer is required';
   }
 
   if (!data.serviceProvider) {
-    errors.serviceProvider = ['Service provider is required'];
+    errors.serviceProvider = 'Service provider is required';
   }
 
   if (!data.transactionType) {
-    errors.transactionType = ['Transaction type is required'];
+    errors.transactionType = 'Transaction type is required';
   }
 
-  if (!data.transactionDirection) {
-    errors.transactionDirection = ['Transaction direction is required'];
+  if (!data.paymentMethod) {
+    errors.paymentMethod = 'Payment method is required';
   }
 
   // Amount validation
   if (!data.amount) {
-    errors.amount = ['Amount is required'];
+    errors.amount = 'Amount is required';
   } else {
     const amount = parseFloat(data.amount);
     if (isNaN(amount)) {
-      errors.amount = ['Amount must be a valid number'];
+      errors.amount = 'Amount must be a valid number';
     } else if (amount <= 0) {
-      errors.amount = ['Amount must be greater than zero'];
+      errors.amount = 'Amount must be greater than zero';
     } else if (!/^\d+(\.\d{1,2})?$/.test(data.amount)) {
-      errors.amount = ['Amount can have maximum 2 decimal places'];
+      errors.amount = 'Amount can have maximum 2 decimal places';
     }
-  }
-
-  // Currency validation
-  if (!data.currency) {
-    errors.currency = ['Currency is required'];
   }
 
   return errors;

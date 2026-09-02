@@ -1,6 +1,7 @@
-﻿/**
+/**
  * Transaction Management Types
  * TypeScript interfaces and types for financial transactions
+ * ALIGNED WITH ACTUAL DATABASE SCHEMA
  */
 
 // Enums
@@ -16,55 +17,45 @@ export enum TransactionType {
   Local = 'local',
   International = 'international',
 }
-
 export enum TransactionDirection {
   Inbound = 'inbound',
   Outbound = 'outbound',
 }
 
+
 export enum TransactionStatus {
   Pending = 'pending',
   Completed = 'completed',
+  Failed = 'failed',
   Cancelled = 'cancelled',
 }
 
-// Base Transaction Interface
+// Base Transaction Interface (matches actual DB columns)
 export interface Transaction {
   id: string;
-  transactionNumber: string;
   customerId: string;
-  serviceProvider: ServiceProvider;
+  serviceProvider: string;
   transactionType: TransactionType;
-  transactionDirection: TransactionDirection;
   amount: number;
-  currency: string;
-  commissionRate: number;
-  commissionAmount: number;
-  totalAmount: number;
+  commissionRate: number | null;
+  commissionAmount: number | null;
+  paymentMethod: string;
+  referenceNumber: string | null;
   status: TransactionStatus;
-  notes?: string;
+  notes: string | null;
   createdAt: string;
   createdBy: string;
   updatedAt: string;
-  updatedBy: string;
-  completedAt?: string;
-  completedBy?: string;
-  cancelledAt?: string;
-  cancelledBy?: string;
-  cancellationReason?: string;
 }
 
 // Transaction with customer and employee details
 export interface TransactionWithDetails extends Transaction {
   customer: {
     id: string;
-    firstName?: string;
-    lastName?: string;
-    businessName?: string;
+    customerName: string;
     customerType: string;
-    email: string;
+    email: string | null;
     phone: string;
-    nationalId?: string;
   };
   createdByEmployee: {
     id: string;
@@ -76,11 +67,11 @@ export interface TransactionWithDetails extends Transaction {
 // Transaction Form Data
 export interface TransactionFormData {
   customerId: string;
-  serviceProvider: ServiceProvider;
+  serviceProvider: string;
   transactionType: TransactionType;
-  transactionDirection: TransactionDirection;
   amount: string;
-  currency: string;
+  paymentMethod: string;
+  referenceNumber?: string;
   notes?: string;
 }
 
@@ -95,9 +86,8 @@ export interface TransactionFilters {
   searchTerm?: string;
   dateFrom?: string;
   dateTo?: string;
-  serviceProvider?: ServiceProvider | 'all';
+  serviceProvider?: string | 'all';
   transactionType?: TransactionType | 'all';
-  transactionDirection?: TransactionDirection | 'all';
   status?: TransactionStatus | 'all';
   employeeId?: string | 'all';
 }
@@ -108,22 +98,19 @@ export interface TransactionSummary {
   todayTransactions: number;
   totalAmount: number;
   totalCommission: number;
-  inboundCount: number;
-  inboundAmount: number;
-  outboundCount: number;
-  outboundAmount: number;
   localCount: number;
   localAmount: number;
   internationalCount: number;
   internationalAmount: number;
   pendingCount: number;
   completedCount: number;
+  failedCount: number;
   cancelledCount: number;
 }
 
 // Service Provider Statistics
 export interface ServiceProviderStats {
-  provider: ServiceProvider;
+  provider: string;
   count: number;
   totalAmount: number;
   commission: number;
@@ -140,5 +127,6 @@ export interface PaginatedTransactions {
 
 // Validation Errors
 export interface ValidationErrors {
-  [key: string]: string[];
+  [key: string]: string;
 }
+
