@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Announcements Types
  */
 
@@ -12,7 +12,9 @@ export interface Announcement {
   id: string;
   title: string;
   message: string;
+  priority?: string;
   status: AnnouncementStatus;
+  publishDate?: string;
   expiryDate?: string;
   createdAt: string;
   createdBy: string;
@@ -31,6 +33,8 @@ export interface AnnouncementWithAuthor extends Announcement {
 export interface AnnouncementFormData {
   title: string;
   message: string;
+  priority?: string;
   status: AnnouncementStatus;
+  publishDate?: string;
   expiryDate?: string;
 }
