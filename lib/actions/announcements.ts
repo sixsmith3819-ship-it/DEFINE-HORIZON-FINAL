@@ -28,6 +28,7 @@ export async function createAnnouncement(data: AnnouncementFormData): Promise<{ 
       updated_by: user.id,
     }).select('id').single();
 
+    if (!announcement) throw new Error('Failed to create announcement');
     return { success: true, announcementId: announcement.id };
   } catch (error: any) {
     return { success: false, error: error.message };
