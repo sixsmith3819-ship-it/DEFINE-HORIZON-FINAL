@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { createServerClient } from '@/lib/supabase-server';
 import {
@@ -56,11 +56,16 @@ export async function createTransaction(
 ): Promise<{
   success: boolean;
   transactionId?: string;
-  transactionNumber?: string;
   error?: string;
   validationErrors?: ValidationErrors;
 }> {
   try {
+    console.log('[createTransaction] Starting with data:', { 
+      customerId: data.customerId, 
+      transactionType: data.transactionType,
+      amount: data.amount 
+    });
+
     const supabase = await createServerClient();
 
     // Authenticate user
@@ -69,58 +74,75 @@ export async function createTransaction(
     } = await supabase.auth.getUser();
 
     if (!user) {
+      console.log('[createTransaction] No user found');
       return { success: false, error: 'Unauthorized' };
     }
+
+    console.log('[createTransaction] User authenticated:', user.id);
 
     // Validate form data
     const validationErrors = validateTransactionFormData(data);
     if (hasValidationErrors(validationErrors)) {
+      console.log('[createTransaction] Validation errors:', validationErrors);
       return { success: false, validationErrors };
     }
 
     // Get commission rates
     const ratesResult = await getCommissionRates();
     if (!ratesResult.success || !ratesResult.rates) {
+      console.log('[createTransaction] Failed to fetch commission rates');
       return { success: false, error: 'Failed to fetch commission rates' };
     }
 
     // Calculate commission
     const amount = parseFloat(data.amount);
-    const { commissionRate, commissionAmount, totalAmount } = calculateCommission(
+    const { commissionRate, commissionAmount } = calculateCommission(
       amount,
       data.transactionType,
       ratesResult.rates
     );
 
+    console.log('[createTransaction] Commission calculated:', { commissionRate, commissionAmount });
+
+    // Build transaction data with ONLY columns that exist in database
+    const transactionData = {
+      customer_id: data.customerId,
+      service_provider: data.serviceProvider,
+      transaction_type: data.transactionType,
+      amount,
+      commission_rate: commissionRate,
+      commission_amount: commissionAmount,
+      payment_method: data.paymentMethod,
+      reference_number: data.referenceNumber || null,
+      status: 'completed',
+      notes: data.notes || null,
+      created_by: user.id,
+    };
+
+    console.log('[createTransaction] Inserting transaction:', transactionData);
+
     // Insert transaction
     const { data: transaction, error } = await supabase
       .from('transactions')
-      .insert({
-        customer_id: data.customerId,
-        service_provider: data.serviceProvider,
-        transaction_type: data.transactionType,
-        transaction_direction: data.transactionDirection,
-        amount,
-        currency: data.currency,
-        commission_rate: commissionRate,
-        commission_amount: commissionAmount,
-        total_amount: totalAmount,
-        notes: data.notes || null,
-        created_by: user.id,
-        updated_by: user.id,
-      })
-      .select('id, transaction_number')
+      .insert(transactionData)
+      .select('id')
       .single();
 
-    if (error) throw error;
+    console.log('[createTransaction] Insert result:', { success: !!transaction, error: error?.message });
+
+    if (error) {
+      console.error('[createTransaction] Insert failed:', error);
+      throw error;
+    }
+
+    console.log('[createTransaction] Transaction created successfully:', transaction.id);
 
     return {
       success: true,
       transactionId: transaction.id,
-      transactionNumber: transaction.transaction_number,
     };
   } catch (error: any) {
-    console.error('Create transaction error:', error);
+    console.error('[createTransaction] Exception:', error);
     return { success: false, error: error.message };
   }
 }
@@ -195,9 +217,10 @@ export async function getTransactions(
       query = query.eq('transaction_type', filters.transactionType);
     }
 
-    if (filters?.transactionDirection && filters.transactionDirection !== 'all') {
-      query = query.eq('transaction_direction', filters.transactionDirection);
-    }
+    // Transaction direction filter removed - column doesn't exist in DB
+    // if (filters?.transactionDirection && filters.transactionDirection !== 'all') {
+    //   query = query.eq('transaction_direction', filters.transactionDirection);
+    // }
 
     if (filters?.status && filters.status !== 'all') {
       query = query.eq('status', filters.status);
@@ -249,36 +272,31 @@ export async function getTransactions(
 }
 
 /**
- * Transform database transaction to camelCase
+/**
+ * Transform database transaction to camelCase (matches actual DB schema)
  */
 function transformTransactionData(raw: any): TransactionWithDetails {
   return {
     id: raw.id,
-    transactionNumber: raw.transaction_number,
     customerId: raw.customer_id,
     serviceProvider: raw.service_provider,
     transactionType: raw.transaction_type,
-    transactionDirection: raw.transaction_direction,
     amount: parseFloat(raw.amount),
-    currency: raw.currency,
-    commissionRate: parseFloat(raw.commission_rate),
-    commissionAmount: parseFloat(raw.commission_amount),
-    totalAmount: parseFloat(raw.total_amount),
+    commissionRate: raw.commission_rate ? parseFloat(raw.commission_rate) : null,
+    commissionAmount: raw.commission_amount ? parseFloat(raw.commission_amount) : null,
+    paymentMethod: raw.payment_method,
+    referenceNumber: raw.reference_number,
     status: raw.status,
     notes: raw.notes,
     createdAt: raw.created_at,
     createdBy: raw.created_by,
     updatedAt: raw.updated_at,
-    updatedBy: raw.updated_by,
     customer: {
       id: raw.customers.id,
-      firstName: raw.customers.first_name,
-      lastName: raw.customers.last_name,
-      businessName: raw.customers.business_name,
+      customerName: raw.customers.customer_name,
       customerType: raw.customers.customer_type,
       email: raw.customers.email,
       phone: raw.customers.phone,
-      nationalId: raw.customers.national_id,
     },
     createdByEmployee: {
       id: raw.profiles.id,
@@ -287,10 +305,6 @@ function transformTransactionData(raw: any): TransactionWithDetails {
     },
   };
 }
-
-/**
- * Get transaction detail by ID
- */
 export async function getTransactionDetail(
   transactionId: string
 ): Promise<{

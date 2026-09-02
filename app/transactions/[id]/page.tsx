@@ -4,9 +4,9 @@ import { ArrowLeft, Printer } from 'lucide-react';
 import { getTransactionDetail } from '@/lib/actions/transactions';
 import { TransactionStatus } from '@/lib/types/transaction';
 
-export default async function TransactionDetailPage({ params }: { params: { id: string } }) {
-  const result = await getTransactionDetail(params.id);
-
+export default async function TransactionDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const result = await getTransactionDetail(id);
   if (!result.success || !result.transaction) {
     notFound();
   }
@@ -33,7 +33,7 @@ export default async function TransactionDetailPage({ params }: { params: { id: 
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Transaction Details</h1>
-            <p className="text-sm text-gray-600">{txn.transactionNumber}</p>
+            <p className="text-sm text-gray-600">#{txn.id.substring(0, 8)}</p>
           </div>
         </div>
       </div>
@@ -62,7 +62,7 @@ export default async function TransactionDetailPage({ params }: { params: { id: 
             <div>
               <p className="text-sm text-gray-500">Name</p>
               <p className="text-base font-medium text-gray-900">
-                {customer.businessName || `${customer.firstName} ${customer.lastName}`}
+                {customer.customerName}
               </p>
             </div>
             <div>
@@ -87,10 +87,7 @@ export default async function TransactionDetailPage({ params }: { params: { id: 
               <p className="text-sm text-gray-500">Type</p>
               <p className="text-base font-medium text-gray-900 capitalize">{txn.transactionType}</p>
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Direction</p>
-              <p className="text-base font-medium text-gray-900 capitalize">{txn.transactionDirection}</p>
-            </div>
+            
             <div>
               <p className="text-sm text-gray-500">Processed By</p>
               <p className="text-base font-medium text-gray-900">{txn.createdByEmployee.fullName}</p>
@@ -103,15 +100,15 @@ export default async function TransactionDetailPage({ params }: { params: { id: 
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-700">Amount</span>
-              <span className="font-medium">{txn.currency} {txn.amount.toFixed(2)}</span>
+              <span className="font-medium">${txn.amount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-700">Commission ({txn.commissionRate}%)</span>
-              <span className="font-medium">{txn.currency} {txn.commissionAmount.toFixed(2)}</span>
+              <span className="font-medium">${(txn.commissionAmount || 0).toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-lg font-bold border-t pt-3">
               <span>Total</span>
-              <span>{txn.currency} {txn.totalAmount.toFixed(2)}</span>
+              <span>${(txn.amount + (txn.commissionAmount || 0)).toFixed(2)}</span>
             </div>
           </div>
         </div>

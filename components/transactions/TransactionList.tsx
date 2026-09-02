@@ -21,7 +21,8 @@ export default function TransactionList({ transactions, pagination }: Transactio
     const colors = {
       pending: 'bg-yellow-100 text-yellow-800',
       completed: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800',
+      failed: 'bg-red-100 text-red-800',
+      cancelled: 'bg-gray-100 text-gray-800',
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
@@ -46,7 +47,6 @@ export default function TransactionList({ transactions, pagination }: Transactio
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Provider</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Direction</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
             </tr>
           </thead>
@@ -58,25 +58,22 @@ export default function TransactionList({ transactions, pagination }: Transactio
                 className="hover:bg-gray-50 cursor-pointer"
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
-                  {txn.transactionNumber}
+                  {txn.id.substring(0, 8)}...
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {new Date(txn.createdAt).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {(txn.customer as any).businessName || `${(txn.customer as any).firstName || ""} ${(txn.customer as any).lastName || ""}`.trim() || "Unknown Customer"}
+                  {txn.customer.customerName || "Unknown Customer"}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {txn.serviceProvider}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {txn.currency} {txn.totalAmount.toFixed(2)}
+                  ${txn.amount.toFixed(2)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
                   {txn.transactionType}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
-                  {txn.transactionDirection}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(txn.status)}`}>

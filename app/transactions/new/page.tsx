@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
@@ -8,7 +8,7 @@ import TransactionForm from '@/components/transactions/TransactionForm';
 export default function NewTransactionPage() {
   const router = useRouter();
 
-  const handleSuccess = (transactionId: string, transactionNumber: string) => {
+  const handleSuccess = (transactionId: string) => {
     router.push(`/transactions/${transactionId}?new=true`);
   };
 
