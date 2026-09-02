@@ -13,8 +13,8 @@ export function validateAnnouncementFormData(data: AnnouncementFormData): Record
     errors.title = ['Title must be 200 characters or less'];
   }
 
-  if (!data.message?.trim()) {
-    errors.message = ['Message is required'];
+  if (!data.content?.trim()) {
+    errors.content = ['Content is required'];
   }
 
   if (!data.status) {

@@ -6,18 +6,11 @@ import {
   TransactionWithDetails,
   TransactionFilters,
   PaginatedTransactions,
-  TransactionSummary,
-  ServiceProviderStats,
   CommissionRate,
   TransactionStatus,
   TransactionType,
   ValidationErrors,
 } from '@/lib/types/transaction';
-import {
-  validateTransactionFormData,
-  hasValidationErrors,
-  calculateCommission,
-} from '@/lib/validation/transaction-validation';
 
 /**
  * Get commission rates from database
@@ -49,6 +42,20 @@ export async function getCommissionRates(): Promise<{
 }
 
 /**
+ * Calculate commission based on transaction type and rates
+ */
+function calculateCommission(
+  amount: number,
+  transactionType: TransactionType,
+  rates: CommissionRate[]
+): { commissionRate: number; commissionAmount: number } {
+  const rateObj = rates.find(r => r.transactionType === transactionType);
+  const commissionRate = rateObj ? rateObj.rate : 0;
+  const commissionAmount = (amount * commissionRate) / 100;
+  return { commissionRate, commissionAmount };
+}
+
+/**
  * Create a new transaction
  */
 export async function createTransaction(
@@ -56,7 +63,6 @@ export async function createTransaction(
 ): Promise<{
   success: boolean;
   transactionId?: string;
-  transactionNumber?: string;
   error?: string;
   validationErrors?: ValidationErrors;
 }> {
@@ -73,9 +79,8 @@ export async function createTransaction(
     }
 
     // Validate form data
-    const validationErrors = validateTransactionFormData(data);
-    if (hasValidationErrors(validationErrors)) {
-      return { success: false, validationErrors };
+    if (!data.customerId || !data.serviceProvider || !data.amount || !data.paymentMethod) {
+      return { success: false, error: 'Missing required fields' };
     }
 
     // Get commission rates
@@ -86,7 +91,7 @@ export async function createTransaction(
 
     // Calculate commission
     const amount = parseFloat(data.amount);
-    const { commissionRate, commissionAmount, totalAmount } = calculateCommission(
+    const { commissionRate, commissionAmount } = calculateCommission(
       amount,
       data.transactionType,
       ratesResult.rates
@@ -99,17 +104,16 @@ export async function createTransaction(
         customer_id: data.customerId,
         service_provider: data.serviceProvider,
         transaction_type: data.transactionType,
-        transaction_direction: data.transactionDirection,
         amount,
-        currency: data.currency,
         commission_rate: commissionRate,
         commission_amount: commissionAmount,
-        total_amount: totalAmount,
+        payment_method: data.paymentMethod,
+        reference_number: null, // Can be generated or provided
+        status: 'completed', // Default status
         notes: data.notes || null,
         created_by: user.id,
-        updated_by: user.id,
       })
-      .select('id, transaction_number')
+      .select('id')
       .single();
 
     if (error) throw error;
@@ -117,7 +121,6 @@ export async function createTransaction(
     return {
       success: true,
       transactionId: transaction.id,
-      transactionNumber: transaction.transaction_number,
     };
   } catch (error: any) {
     console.error('Create transaction error:', error);
@@ -183,8 +186,7 @@ export async function getTransactions(
 
     // Apply filters
     if (filters?.searchTerm) {
-      // Search in transaction_number or customer fields
-      query = query.or(`transaction_number.ilike.%${filters.searchTerm}%`);
+      query = query.or(`reference_number.ilike.%${filters.searchTerm}%`);
     }
 
     if (filters?.serviceProvider && filters.serviceProvider !== 'all') {
@@ -193,10 +195,6 @@ export async function getTransactions(
 
     if (filters?.transactionType && filters.transactionType !== 'all') {
       query = query.eq('transaction_type', filters.transactionType);
-    }
-
-    if (filters?.transactionDirection && filters.transactionDirection !== 'all') {
-      query = query.eq('transaction_direction', filters.transactionDirection);
     }
 
     if (filters?.status && filters.status !== 'all') {
@@ -254,31 +252,25 @@ export async function getTransactions(
 function transformTransactionData(raw: any): TransactionWithDetails {
   return {
     id: raw.id,
-    transactionNumber: raw.transaction_number,
+    transactionType: raw.transaction_type,
     customerId: raw.customer_id,
     serviceProvider: raw.service_provider,
-    transactionType: raw.transaction_type,
-    transactionDirection: raw.transaction_direction,
     amount: parseFloat(raw.amount),
-    currency: raw.currency,
-    commissionRate: parseFloat(raw.commission_rate),
-    commissionAmount: parseFloat(raw.commission_amount),
-    totalAmount: parseFloat(raw.total_amount),
+    commissionRate: raw.commission_rate ? parseFloat(raw.commission_rate) : null,
+    commissionAmount: raw.commission_amount ? parseFloat(raw.commission_amount) : null,
+    paymentMethod: raw.payment_method,
+    referenceNumber: raw.reference_number,
     status: raw.status,
     notes: raw.notes,
     createdAt: raw.created_at,
     createdBy: raw.created_by,
     updatedAt: raw.updated_at,
-    updatedBy: raw.updated_by,
     customer: {
       id: raw.customers.id,
-      firstName: raw.customers.first_name,
-      lastName: raw.customers.last_name,
-      businessName: raw.customers.business_name,
+      customerName: raw.customers.customer_name,
       customerType: raw.customers.customer_type,
       email: raw.customers.email,
-      phone: raw.customers.phone,
-      nationalId: raw.customers.national_id,
+      phoneNumber: raw.customers.phone_number,
     },
     createdByEmployee: {
       id: raw.profiles.id,
@@ -353,8 +345,7 @@ export async function getTransactionDetail(
  */
 export async function updateTransactionStatus(
   transactionId: string,
-  newStatus: TransactionStatus,
-  cancellationReason?: string
+  newStatus: TransactionStatus
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await createServerClient();
@@ -378,41 +369,10 @@ export async function updateTransactionStatus(
       return { success: false, error: 'Access denied - Admin only' };
     }
 
-    // Fetch current transaction
-    const { data: current } = await supabase
-      .from('transactions')
-      .select('status')
-      .eq('id', transactionId)
-      .single();
-
-    if (!current) {
-      return { success: false, error: 'Transaction not found' };
-    }
-
-    // Validate status transition (only pending can be changed)
-    if (current.status !== 'pending') {
-      return { success: false, error: 'Only pending transactions can be updated' };
-    }
-
-    // Build update object
-    const updateData: any = {
-      status: newStatus,
-      updated_by: user.id,
-    };
-
-    if (newStatus === TransactionStatus.Completed) {
-      updateData.completed_at = new Date().toISOString();
-      updateData.completed_by = user.id;
-    } else if (newStatus === TransactionStatus.Cancelled) {
-      updateData.cancelled_at = new Date().toISOString();
-      updateData.cancelled_by = user.id;
-      updateData.cancellation_reason = cancellationReason || null;
-    }
-
     // Update transaction
     const { error } = await supabase
       .from('transactions')
-      .update(updateData)
+      .update({ status: newStatus })
       .eq('id', transactionId);
 
     if (error) throw error;

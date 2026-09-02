@@ -24,8 +24,8 @@ export function validateTransactionFormData(data: TransactionFormData): Validati
     errors.transactionType = ['Transaction type is required'];
   }
 
-  if (!data.transactionDirection) {
-    errors.transactionDirection = ['Transaction direction is required'];
+  if (!data.paymentMethod) {
+    errors.paymentMethod = ['Payment method is required'];
   }
 
   // Amount validation
@@ -40,11 +40,6 @@ export function validateTransactionFormData(data: TransactionFormData): Validati
     } else if (!/^\d+(\.\d{1,2})?$/.test(data.amount)) {
       errors.amount = ['Amount can have maximum 2 decimal places'];
     }
-  }
-
-  // Currency validation
-  if (!data.currency) {
-    errors.currency = ['Currency is required'];
   }
 
   return errors;
@@ -71,20 +66,18 @@ export function calculateCommission(
   amount: number,
   transactionType: TransactionType,
   rates: CommissionRate[]
-): { commissionRate: number; commissionAmount: number; totalAmount: number } {
+): { commissionRate: number; commissionAmount: number } {
   // Find rate for transaction type
   const rateConfig = rates.find((r) => r.transactionType === transactionType);
   
   // Default rates if not found in database
-  const commissionRate = rateConfig?.rate || (transactionType === TransactionType.International ? 10 : 8);
+  const commissionRate = rateConfig?.rate || (transactionType === TransactionType.International ? 3.5 : 2.5);
   
   // Calculate commission
   const commissionAmount = (amount * commissionRate) / 100;
-  const totalAmount = amount + commissionAmount;
 
   return {
     commissionRate,
     commissionAmount: parseFloat(commissionAmount.toFixed(2)),
-    totalAmount: parseFloat(totalAmount.toFixed(2)),
   };
 }

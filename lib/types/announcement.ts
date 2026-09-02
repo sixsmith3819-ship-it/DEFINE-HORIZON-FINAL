@@ -11,13 +11,14 @@ export enum AnnouncementStatus {
 export interface Announcement {
   id: string;
   title: string;
-  message: string;
+  content: string;
   status: AnnouncementStatus;
+  priority?: string;
+  publishDate?: string;
   expiryDate?: string;
   createdAt: string;
   createdBy: string;
   updatedAt: string;
-  updatedBy: string;
 }
 
 export interface AnnouncementWithAuthor extends Announcement {
@@ -30,7 +31,9 @@ export interface AnnouncementWithAuthor extends Announcement {
 
 export interface AnnouncementFormData {
   title: string;
-  message: string;
+  content: string;
   status: AnnouncementStatus;
+  priority?: string;
+  publishDate?: string;
   expiryDate?: string;
 }
