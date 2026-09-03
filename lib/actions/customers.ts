@@ -53,14 +53,14 @@ export async function getCustomers(
     }
 
     // Get user role
-    const { data: userRole } = await supabase
-      .from('user_roles')
+    // Check if user can view this customer - query profiles directly
+    const { data: profile } = await supabase
+      .from('profiles')
       .select('role')
-      .eq('user_id', user.id)
+      .eq('id', user.id)
       .single();
 
-    let query = supabase.from('customers').select('*', { count: 'exact' });
-
+    const userRole = profile?.role as string | undefined;
     // Apply role-based filtering
     if (userRole?.role === 'employee') {
       query = query.eq('assigned_employee_id', user.id);
@@ -196,12 +196,12 @@ export async function getCustomerDetail(
       .eq('user_id', user.id)
       .single();
 
-    // Employees can only view assigned customers
-    if (userRole?.role === 'employee' && customer.assigned_employee_id !== user.id) {
+    // Employees can view customers they created OR are assigned to
+    if (userRole === 'employee' &&
+        customer.assigned_employee_id !== user.id &&
+        customer.created_by !== user.id) {
       return { success: false, error: 'Permission denied', statusCode: 403 };
     }
-
-    // Fetch interactions
     const { data: interactions } = await supabase
       .from('customer_interactions')
       .select('*')
@@ -210,7 +210,7 @@ export async function getCustomerDetail(
 
     // Fetch audit log if user is Admin or Manager
     let auditLog: AuditLogEntry[] = [];
-    if (userRole?.role === 'admin' || userRole?.role === 'manager') {
+    if (userRole === 'admin' || userRole === 'manager') {
       const { data: auditData } = await supabase
         .from('customer_audit_log')
         .select('*')
