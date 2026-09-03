@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { createMiddlewareClient } from '@/lib/supabase-middleware'
 
 // Protected routes that require authentication
-const protectedRoutes = ['/dashboard', '/customers', '/settings', '/api']
+const protectedRoutes = ['/dashboard', '/customers', '/settings', '/api', '/reports', '/transactions', '/announcements', '/products']
 
 // Public routes that don't require authentication
 const publicRoutes = ['/login', '/']

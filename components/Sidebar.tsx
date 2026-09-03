@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ChevronLeft, ChevronRight, Home, Users, Settings, LogOut, DollarSign, Package, Bell } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Home, Users, Settings, LogOut, DollarSign, Package, Bell, BarChart2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase-client'
 
 export function Sidebar() {
@@ -38,6 +38,7 @@ export function Sidebar() {
     { href: '/dashboard', icon: Home, label: 'Dashboard' },
     { href: '/customers', icon: Users, label: 'Customers' },
     { href: '/transactions', icon: DollarSign, label: 'Transactions' },
+    { href: '/reports', icon: BarChart2, label: 'Reports' },
     { href: '/products', icon: Package, label: 'Products' },
     { href: '/announcements', icon: Bell, label: 'Announcements' },
     { href: '/settings', icon: Settings, label: 'Settings' },
