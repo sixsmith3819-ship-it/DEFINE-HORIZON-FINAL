@@ -49,82 +49,44 @@ export default function NewCustomerPage() {
   // If no customer type is selected, show type selector
   if (!selectedType) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-4">
-        <div className="max-w-3xl mx-auto">
-          {/* Header */}
+      <div className="p-6" style={{ background: 'var(--dh-bg)', minHeight: '100vh' }}>
+        <div className="max-w-2xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Create New Customer</h1>
-            <p className="text-gray-600">Select the type of customer you want to create</p>
-          </div>
-
-          {/* Customer Type Selection */}
-          <div className="bg-white rounded-lg shadow p-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Individual Customer Option */}
-              <button
-                onClick={() => handleTypeSelect(CustomerType.Individual)}
-                className="border-2 border-gray-300 rounded-lg p-6 hover:border-blue-500 hover:bg-blue-50 transition text-left"
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <svg
-                      className="w-6 h-6 text-blue-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Individual</h3>
-                  <p className="text-sm text-gray-600">Create a customer record for a person</p>
-                </div>
-              </button>
-
-              {/* Business Customer Option */}
-              <button
-                onClick={() => handleTypeSelect(CustomerType.Business)}
-                className="border-2 border-gray-300 rounded-lg p-6 hover:border-blue-500 hover:bg-blue-50 transition text-left"
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <svg
-                      className="w-6 h-6 text-green-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Business</h3>
-                  <p className="text-sm text-gray-600">Create a customer record for a company</p>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Back Button */}
-          <div className="mt-8">
-            <a
-              href="/customers"
-              className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 12H5m7 7l-7-7 7-7" />
-              </svg>
-              Back to Customers
+            <a href="/customers" className="inline-flex items-center gap-2 text-sm font-medium mb-4" style={{ color: 'var(--dh-text-2)' }}>
+              ← Back to Customers
             </a>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--dh-text)' }}>Create New Customer</h1>
+            <p className="text-sm mt-0.5" style={{ color: 'var(--dh-text-2)' }}>Select the type of customer to create</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              onClick={() => handleTypeSelect(CustomerType.Individual)}
+              className="dh-card p-8 text-left cursor-pointer transition-all hover:scale-[1.02]"
+              style={{ background: 'white' }}
+            >
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--dh-text)' }}>Individual</h3>
+              <p className="text-sm" style={{ color: 'var(--dh-text-2)' }}>Create a customer record for a person</p>
+            </button>
+
+            <button
+              onClick={() => handleTypeSelect(CustomerType.Business)}
+              className="dh-card p-8 text-left cursor-pointer transition-all hover:scale-[1.02]"
+              style={{ background: 'white' }}
+            >
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--dh-text)' }}>Business</h3>
+              <p className="text-sm" style={{ color: 'var(--dh-text-2)' }}>Create a customer record for a company</p>
+            </button>
           </div>
         </div>
       </div>
@@ -133,35 +95,24 @@ export default function NewCustomerPage() {
 
   // If customer type is selected, show the form
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-3xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => setSelectedType(null)}
-            className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2 mb-4"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 12H5m7 7l-7-7 7-7" />
-            </svg>
-            Back to Type Selection
+    <div className="p-6" style={{ background: 'var(--dh-bg)', minHeight: '100vh' }}>
+      <div className="max-w-2xl mx-auto">
+        <div className="mb-6">
+          <button onClick={() => setSelectedType(null)} className="inline-flex items-center gap-2 text-sm font-medium mb-4" style={{ color: 'var(--dh-text-2)' }}>
+            ← Back to Type Selection
           </button>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Create New {selectedType === CustomerType.Individual ? 'Individual' : 'Business'} Customer
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--dh-text)' }}>
+            New {selectedType === CustomerType.Individual ? 'Individual' : 'Business'} Customer
           </h1>
-          <p className="text-gray-600">Fill in the customer details below</p>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--dh-text-2)' }}>Fill in the customer details below</p>
         </div>
 
-        {/* Form Container */}
-        <div className="bg-white rounded-lg shadow p-8">
-          {/* Error Message */}
+        <div className="dh-card p-6">
           {submitError && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-red-800">{submitError}</p>
+            <div className="mb-5 rounded-xl px-4 py-3 text-sm font-medium" style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca' }}>
+              {submitError}
             </div>
           )}
-
-          {/* Customer Form */}
           <CustomerForm
             customerType={selectedType}
             isSubmitting={isSubmitting}
