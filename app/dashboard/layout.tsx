@@ -19,7 +19,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen" style={{ background: 'var(--dh-bg)' }}>
       {/* Sidebar Navigation */}
       <Sidebar />
 

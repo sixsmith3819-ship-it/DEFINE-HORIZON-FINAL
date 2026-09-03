@@ -1,8 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { getTransactionDetail } from '@/lib/actions/transactions';
-import { TransactionStatus } from '@/lib/types/transaction';
 
 export default async function TransactionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -14,101 +13,96 @@ export default async function TransactionDetailPage({ params }: { params: Promis
   const txn = result.transaction;
   const customer = txn.customer;
 
-  const getStatusColor = (status: TransactionStatus) => {
-    switch (status) {
-      case TransactionStatus.Pending: return 'bg-yellow-100 text-yellow-800';
-      case TransactionStatus.Completed: return 'bg-green-100 text-green-800';
-      case TransactionStatus.Cancelled: return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="mb-6">
-        <Link href="/transactions" className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4">
-          <ArrowLeft className="w-4 h-4" />
-          Back to Transactions
-        </Link>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Transaction Details</h1>
-            <p className="text-sm text-gray-600">#{txn.id.substring(0, 8)}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg shadow divide-y divide-gray-200">
-        <div className="p-6">
+    <div className="p-6" style={{ background: 'var(--dh-bg)', minHeight: '100vh' }}>
+      <div className="max-w-3xl mx-auto">
+        <div className="mb-6">
+          <Link href="/transactions" className="inline-flex items-center gap-2 text-sm font-medium mb-4" style={{ color: 'var(--dh-text-2)' }}>
+            <ArrowLeft className="w-4 h-4" />
+            Back to Transactions
+          </Link>
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-1">Status</h3>
-              <span className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(txn.status)}`}>
-                {txn.status}
-              </span>
+              <h1 className="text-2xl font-bold" style={{ color: 'var(--dh-text)' }}>Transaction Details</h1>
+              <p className="text-sm font-mono mt-0.5" style={{ color: 'var(--dh-text-3)' }}>#{txn.id.substring(0, 13)}</p>
             </div>
-            <div className="text-right">
-              <h3 className="text-sm font-medium text-gray-500 mb-1">Date</h3>
-              <p className="text-base font-medium text-gray-900">
-                {new Date(txn.createdAt).toLocaleDateString()}
-              </p>
-            </div>
+            <span className={`badge text-sm px-3 py-1.5 ${txn.status === 'completed' ? 'badge-success' : txn.status === 'pending' ? 'badge-warning' : txn.status === 'failed' ? 'badge-error' : 'badge-gray'}`}>
+              {txn.status}
+            </span>
           </div>
         </div>
 
-        <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Customer Information</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-500">Name</p>
-              <p className="text-base font-medium text-gray-900">
-                {customer.customerName}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Email</p>
-              <p className="text-base font-medium text-gray-900">{customer.email}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Phone</p>
-              <p className="text-base font-medium text-gray-900">{customer.phone}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Transaction Details</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-500">Service Provider</p>
-              <p className="text-base font-medium text-gray-900">{txn.serviceProvider}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Type</p>
-              <p className="text-base font-medium text-gray-900 capitalize">{txn.transactionType}</p>
-            </div>
-            
-            <div>
-              <p className="text-sm text-gray-500">Processed By</p>
-              <p className="text-base font-medium text-gray-900">{txn.createdByEmployee.fullName}</p>
+        <div className="space-y-4">
+          {/* Customer info */}
+          <div className="dh-card p-6">
+            <h3 className="text-sm font-bold uppercase tracking-wide mb-4" style={{ color: 'var(--dh-text-3)' }}>Customer Information</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs mb-1" style={{ color: 'var(--dh-text-3)' }}>Name</p>
+                <p className="font-semibold" style={{ color: 'var(--dh-text)' }}>{customer.customerName}</p>
+              </div>
+              <div>
+                <p className="text-xs mb-1" style={{ color: 'var(--dh-text-3)' }}>Phone</p>
+                <p className="font-medium" style={{ color: 'var(--dh-text)' }}>{customer.phone}</p>
+              </div>
+              {customer.email && (
+                <div>
+                  <p className="text-xs mb-1" style={{ color: 'var(--dh-text-3)' }}>Email</p>
+                  <p className="font-medium" style={{ color: 'var(--dh-text)' }}>{customer.email}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-xs mb-1" style={{ color: 'var(--dh-text-3)' }}>Date</p>
+                <p className="font-medium" style={{ color: 'var(--dh-text)' }}>{new Date(txn.createdAt).toLocaleDateString()}</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="p-6 bg-gray-50">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Financial Summary</h3>
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-700">Amount</span>
-              <span className="font-medium">${txn.amount.toFixed(2)}</span>
+          {/* Transaction details */}
+          <div className="dh-card p-6">
+            <h3 className="text-sm font-bold uppercase tracking-wide mb-4" style={{ color: 'var(--dh-text-3)' }}>Transaction Details</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs mb-1" style={{ color: 'var(--dh-text-3)' }}>Service Provider</p>
+                <p className="font-semibold" style={{ color: 'var(--dh-text)' }}>{txn.serviceProvider}</p>
+              </div>
+              <div>
+                <p className="text-xs mb-1" style={{ color: 'var(--dh-text-3)' }}>Type</p>
+                <span className={`badge ${txn.transactionType === 'local' ? 'badge-info' : 'badge-cyan'}`}>{txn.transactionType}</span>
+              </div>
+              <div>
+                <p className="text-xs mb-1" style={{ color: 'var(--dh-text-3)' }}>Payment Method</p>
+                <p className="font-medium capitalize" style={{ color: 'var(--dh-text)' }}>{txn.paymentMethod}</p>
+              </div>
+              <div>
+                <p className="text-xs mb-1" style={{ color: 'var(--dh-text-3)' }}>Processed By</p>
+                <p className="font-medium" style={{ color: 'var(--dh-text)' }}>{txn.createdByEmployee.fullName}</p>
+              </div>
+              {txn.referenceNumber && (
+                <div className="col-span-2">
+                  <p className="text-xs mb-1" style={{ color: 'var(--dh-text-3)' }}>Reference</p>
+                  <p className="font-mono text-sm" style={{ color: 'var(--dh-text)' }}>{txn.referenceNumber}</p>
+                </div>
+              )}
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-700">Commission ({txn.commissionRate}%)</span>
-              <span className="font-medium">${(txn.commissionAmount || 0).toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-lg font-bold border-t pt-3">
-              <span>Total</span>
-              <span>${(txn.amount + (txn.commissionAmount || 0)).toFixed(2)}</span>
+          </div>
+
+          {/* Financial summary */}
+          <div className="dh-card p-6" style={{ background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)' }}>
+            <h3 className="text-sm font-bold uppercase tracking-wide mb-4" style={{ color: 'var(--dh-text-3)' }}>Financial Summary</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span style={{ color: 'var(--dh-text-2)' }}>Transaction Amount</span>
+                <span className="font-semibold text-lg" style={{ color: 'var(--dh-text)' }}>${txn.amount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span style={{ color: 'var(--dh-text-2)' }}>Commission ({txn.commissionRate ?? 0}%)</span>
+                <span className="font-medium" style={{ color: '#10b981' }}>${(txn.commissionAmount || 0).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center pt-3" style={{ borderTop: '2px solid var(--dh-border)' }}>
+                <span className="font-bold text-lg" style={{ color: 'var(--dh-text)' }}>Total</span>
+                <span className="font-bold text-2xl gradient-text">${(txn.amount + (txn.commissionAmount || 0)).toFixed(2)}</span>
+              </div>
             </div>
           </div>
         </div>

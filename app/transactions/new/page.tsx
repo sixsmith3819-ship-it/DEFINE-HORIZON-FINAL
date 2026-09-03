@@ -13,17 +13,16 @@ export default function NewTransactionPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <Link href="/transactions" className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4">
-          <ArrowLeft className="w-4 h-4" />
-          Back to Transactions
-        </Link>
-        <h1 className="text-2xl font-bold text-gray-900">New Transaction</h1>
-        <p className="text-sm text-gray-600">Record a new financial transaction</p>
-      </div>
-
-      <div className="max-w-2xl">
+    <div className="p-6" style={{ background: 'var(--dh-bg)', minHeight: '100vh' }}>
+      <div className="max-w-2xl mx-auto">
+        <div className="mb-6">
+          <Link href="/transactions" className="inline-flex items-center gap-2 text-sm font-medium mb-4 transition-colors" style={{ color: 'var(--dh-text-2)' }}>
+            <ArrowLeft className="w-4 h-4" />
+            Back to Transactions
+          </Link>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--dh-text)' }}>New Transaction</h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--dh-text-2)' }}>Record a new financial transaction</p>
+        </div>
         <TransactionForm onSuccess={handleSuccess} />
       </div>
     </div>

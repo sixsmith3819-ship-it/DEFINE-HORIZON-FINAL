@@ -10,16 +10,12 @@ import { checkPermission } from '@/lib/auth/permissions';
 
 // Badge component for status
 function StatusBadge({ status }: { status: CustomerStatus }) {
-  const color = status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
-  const label = status === 'active' ? 'Active' : 'Inactive';
-  return <span className={`px-3 py-1 rounded-full text-sm font-medium ${color}`}>{label}</span>;
+  return <span className={`badge text-xs ${status === 'active' ? 'badge-success' : 'badge-gray'}`}>{status === 'active' ? 'Active' : 'Inactive'}</span>
 }
 
 // Badge for customer type
 function TypeBadge({ type }: { type: CustomerType }) {
-  const color = type === 'individual' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800';
-  const label = type === 'individual' ? 'Individual' : 'Business';
-  return <span className={`px-3 py-1 rounded-full text-sm font-medium ${color}`}>{label}</span>;
+  return <span className={`badge text-xs ${type === 'individual' ? 'badge-info' : 'badge-purple'}`}>{type === 'individual' ? 'Individual' : 'Business'}</span>
 }
 
 // Format date for display
@@ -51,9 +47,9 @@ async function CustomerDetailContent({ customerId }: { customerId: string }) {
 
   if (userError || !user) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-        <h2 className="text-red-800 font-semibold text-lg mb-2">Authentication Error</h2>
-        <p className="text-red-700">You must be logged in to view this page.</p>
+      <div className="dh-card rounded-xl px-4 py-3" style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca' }}>
+        <h2 className="font-semibold text-lg mb-2">Authentication Error</h2>
+        <p>You must be logged in to view this page.</p>
       </div>
     );
   }
@@ -63,10 +59,10 @@ async function CustomerDetailContent({ customerId }: { customerId: string }) {
 
   if (!detailResult.success || detailResult.statusCode === 404) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-        <h2 className="text-yellow-800 font-semibold text-lg mb-2">Customer Not Found</h2>
-        <p className="text-yellow-700 mb-4">The customer you're looking for doesn't exist or has been deleted.</p>
-        <Link href="/customers" className="text-blue-600 hover:text-blue-800 font-medium">
+      <div className="dh-card rounded-xl px-4 py-6" style={{ background: '#fefce8', border: '1px solid #fde047' }}>
+        <h2 className="font-semibold text-lg mb-2" style={{ color: '#854d0e' }}>Customer Not Found</h2>
+        <p className="mb-4" style={{ color: '#a16207' }}>The customer you&apos;re looking for doesn&apos;t exist or has been deleted.</p>
+        <Link href="/customers" className="text-sm font-medium" style={{ color: 'var(--dh-primary)' }}>
           ← Back to Customer List
         </Link>
       </div>
@@ -75,10 +71,10 @@ async function CustomerDetailContent({ customerId }: { customerId: string }) {
 
   if (!detailResult.success || detailResult.statusCode === 403) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-        <h2 className="text-red-800 font-semibold text-lg mb-2">Permission Denied</h2>
-        <p className="text-red-700 mb-4">You don't have permission to view this customer.</p>
-        <Link href="/customers" className="text-blue-600 hover:text-blue-800 font-medium">
+      <div className="dh-card rounded-xl px-4 py-6" style={{ background: '#fee2e2', border: '1px solid #fecaca' }}>
+        <h2 className="font-semibold text-lg mb-2" style={{ color: '#991b1b' }}>Permission Denied</h2>
+        <p className="mb-4" style={{ color: '#991b1b' }}>You don&apos;t have permission to view this customer.</p>
+        <Link href="/customers" className="text-sm font-medium" style={{ color: 'var(--dh-primary)' }}>
           ← Back to Customer List
         </Link>
       </div>
@@ -91,10 +87,10 @@ async function CustomerDetailContent({ customerId }: { customerId: string }) {
 
   if (!customer) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-        <h2 className="text-yellow-800 font-semibold text-lg mb-2">Customer Not Found</h2>
-        <p className="text-yellow-700 mb-4">The customer you're looking for doesn't exist or has been deleted.</p>
-        <Link href="/customers" className="text-blue-600 hover:text-blue-800 font-medium">
+      <div className="dh-card rounded-xl px-4 py-6" style={{ background: '#fefce8', border: '1px solid #fde047' }}>
+        <h2 className="font-semibold text-lg mb-2" style={{ color: '#854d0e' }}>Customer Not Found</h2>
+        <p className="mb-4" style={{ color: '#a16207' }}>The customer you&apos;re looking for doesn&apos;t exist or has been deleted.</p>
+        <Link href="/customers" className="text-sm font-medium" style={{ color: 'var(--dh-primary)' }}>
           ← Back to Customer List
         </Link>
       </div>
@@ -116,13 +112,13 @@ async function CustomerDetailContent({ customerId }: { customerId: string }) {
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Header with back link */}
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/customers" className="text-blue-600 hover:text-blue-800 font-medium">
+        <Link href="/customers" className="text-sm font-medium" style={{ color: 'var(--dh-primary)' }}>
           ← Back to Customers
         </Link>
       </div>
 
       {/* Customer Info Card */}
-      <div className="bg-white rounded-lg shadow-md p-8">
+      <div className="dh-card p-8">
         {/* Customer Header */}
         <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6 pb-6 border-b">
           <div>
@@ -138,7 +134,7 @@ async function CustomerDetailContent({ customerId }: { customerId: string }) {
             {canEdit && (
               <Link
                 href={`/customers/${customerId}/edit`}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-center"
+                className="dh-btn-primary"
               >
                 Edit
               </Link>
@@ -310,7 +306,7 @@ async function CustomerDetailContent({ customerId }: { customerId: string }) {
       </div>
 
       {/* Interactions/Notes Timeline Section */}
-      <div className="bg-white rounded-lg shadow-md p-8">
+      <div className="dh-card p-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Interaction History</h2>
 
         {/* Add note form */}
@@ -333,12 +329,12 @@ async function CustomerDetailContent({ customerId }: { customerId: string }) {
               <textarea
                 name="content"
                 placeholder="Write a note about this customer..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="dh-input"
                 rows={3}
               />
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                className="dh-btn-primary"
               >
                 Add Note
               </button>
@@ -387,7 +383,7 @@ async function CustomerDetailContent({ customerId }: { customerId: string }) {
 
       {/* Audit Log Section (Admin/Manager only) */}
       {canViewAudit && auditLog.length > 0 && (
-        <div className="bg-white rounded-lg shadow-md p-8">
+        <div className="dh-card p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Audit Trail</h2>
           <div className="space-y-4">
             {auditLog.map((entry: AuditLogEntry) => (
@@ -437,14 +433,14 @@ export default async function CustomerDetailPage({
   const { id: customerId } = await params;
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="p-6 min-h-screen" style={{ background: 'var(--dh-bg)' }}>
       <Suspense
         fallback={
           <div className="max-w-6xl mx-auto">
-            <div className="bg-white rounded-lg shadow-md p-8">
+            <div className="dh-card p-8">
               <div className="space-y-4">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="h-8 bg-gray-200 rounded animate-pulse" />
+                  <div key={i} className="h-8 skeleton" />
                 ))}
               </div>
             </div>

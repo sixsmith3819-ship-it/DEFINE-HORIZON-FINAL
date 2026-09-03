@@ -38,136 +38,161 @@ export default async function AdminDashboard() {
   const monthlyStats = monthlyStatsResult.success ? monthlyStatsResult.data! : [];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="p-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-2">Welcome back, {profile.full_name || 'Administrator'}</p>
+    <div className="min-h-screen p-6" style={{ background: 'var(--dh-bg)' }}>
+      <div className="max-w-7xl mx-auto">
+
+        {/* Header */}
+        <div className="mb-8 animate-fade-in-up">
+          <p className="text-sm font-semibold mb-1" style={{ color: 'var(--dh-primary)' }}>Good day,</p>
+          <h1 className="text-3xl font-bold" style={{ color: 'var(--dh-text)' }}>{profile.full_name || 'Administrator'}</h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--dh-text-2)' }}>Here&apos;s what&apos;s happening with Define Horizon today.</p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-600">
-            <div className="flex items-center justify-between">
+        {/* Primary stat cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {/* Revenue */}
+          <div className="dh-card stat-card p-6">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Total Revenue</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  ${stats?.totalRevenue.toFixed(2) || '0.00'}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">{stats?.totalTransactions || 0} transactions</p>
+                <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: 'var(--dh-text-3)' }}>Total Revenue</p>
+                <p className="text-3xl font-bold" style={{ color: 'var(--dh-text)' }}>${stats?.totalRevenue.toFixed(2) || '0.00'}</p>
+                <p className="text-xs mt-2" style={{ color: 'var(--dh-text-3)' }}>{stats?.totalTransactions || 0} transactions</p>
               </div>
-              <DollarSign className="w-12 h-12 text-blue-600 opacity-20" />
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
+                <DollarSign className="w-6 h-6 text-white" />
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6 border-l-4 border-green-600">
-            <div className="flex items-center justify-between">
+          {/* Commission */}
+          <div className="dh-card stat-card p-6">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Commission Earned</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  ${stats?.totalCommission.toFixed(2) || '0.00'}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {stats ? ((stats.totalCommission / stats.totalRevenue) * 100).toFixed(1) : 0}% of revenue
+                <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: 'var(--dh-text-3)' }}>Commission Earned</p>
+                <p className="text-3xl font-bold" style={{ color: 'var(--dh-text)' }}>${stats?.totalCommission.toFixed(2) || '0.00'}</p>
+                <p className="text-xs mt-2" style={{ color: 'var(--dh-text-3)' }}>
+                  {stats && stats.totalRevenue > 0 ? ((stats.totalCommission / stats.totalRevenue) * 100).toFixed(1) : 0}% of revenue
                 </p>
               </div>
-              <TrendingUp className="w-12 h-12 text-green-600 opacity-20" />
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+                <TrendingUp className="w-6 h-6 text-white" />
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6 border-l-4 border-purple-600">
-            <div className="flex items-center justify-between">
+          {/* Customers */}
+          <div className="dh-card stat-card p-6">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Total Customers</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{stats?.totalCustomers || 0}</p>
-                <p className="text-xs text-gray-500 mt-1">Registered clients</p>
+                <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: 'var(--dh-text-3)' }}>Total Customers</p>
+                <p className="text-3xl font-bold" style={{ color: 'var(--dh-text)' }}>{stats?.totalCustomers || 0}</p>
+                <p className="text-xs mt-2" style={{ color: 'var(--dh-text-3)' }}>Registered clients</p>
               </div>
-              <Users className="w-12 h-12 text-purple-600 opacity-20" />
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}>
+                <Users className="w-6 h-6 text-white" />
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6 border-l-4 border-orange-600">
-            <div className="flex items-center justify-between">
+          {/* Products */}
+          <div className="dh-card stat-card p-6">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Products</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{stats?.totalProducts || 0}</p>
-                {(stats?.lowStockProducts || 0) > 0 && (
-                  <p className="text-xs text-orange-600 mt-1 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    {stats?.lowStockProducts} low stock
+                <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: 'var(--dh-text-3)' }}>Products</p>
+                <p className="text-3xl font-bold" style={{ color: 'var(--dh-text)' }}>{stats?.totalProducts || 0}</p>
+                {(stats?.lowStockProducts || 0) > 0 ? (
+                  <p className="text-xs mt-2 flex items-center gap-1" style={{ color: '#f59e0b' }}>
+                    <AlertCircle className="w-3 h-3" />{stats?.lowStockProducts} low stock
                   </p>
+                ) : (
+                  <p className="text-xs mt-2" style={{ color: 'var(--dh-text-3)' }}>In inventory</p>
                 )}
               </div>
-              <Package className="w-12 h-12 text-orange-600 opacity-20" />
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center gap-3">
-              <Activity className="w-8 h-8 text-indigo-600" />
-              <div>
-                <p className="text-sm text-gray-600">Recent Activity (7 days)</p>
-                <p className="text-2xl font-bold text-gray-900">{stats?.recentTransactions || 0}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center gap-3">
-              <Bell className="w-8 h-8 text-yellow-600" />
-              <div>
-                <p className="text-sm text-gray-600">Active Announcements</p>
-                <p className="text-2xl font-bold text-gray-900">{stats?.activeAnnouncements || 0}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center gap-3">
-              <DollarSign className="w-8 h-8 text-green-600" />
-              <div>
-                <p className="text-sm text-gray-600">Avg Transaction</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  ${stats && stats.totalTransactions > 0 
-                    ? (stats.totalRevenue / stats.totalTransactions).toFixed(2) 
-                    : '0.00'}
-                </p>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>
+                <Package className="w-6 h-6 text-white" />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {trends.length > 0 && <TransactionTrendChart data={trends} />}
-          {providerStats.length > 0 && <ServiceProviderChart data={providerStats} />}
+        {/* Secondary stat row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="dh-card p-5 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(99,102,241,0.1)' }}>
+              <Activity className="w-5 h-5" style={{ color: 'var(--dh-primary)' }} />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--dh-text-3)' }}>Recent Activity</p>
+              <p className="text-2xl font-bold mt-0.5" style={{ color: 'var(--dh-text)' }}>{stats?.recentTransactions || 0}</p>
+              <p className="text-xs" style={{ color: 'var(--dh-text-3)' }}>Last 7 days</p>
+            </div>
+          </div>
+          <div className="dh-card p-5 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(245,158,11,0.1)' }}>
+              <Bell className="w-5 h-5" style={{ color: '#f59e0b' }} />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--dh-text-3)' }}>Announcements</p>
+              <p className="text-2xl font-bold mt-0.5" style={{ color: 'var(--dh-text)' }}>{stats?.activeAnnouncements || 0}</p>
+              <p className="text-xs" style={{ color: 'var(--dh-text-3)' }}>Active</p>
+            </div>
+          </div>
+          <div className="dh-card p-5 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.1)' }}>
+              <DollarSign className="w-5 h-5" style={{ color: '#10b981' }} />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--dh-text-3)' }}>Avg Transaction</p>
+              <p className="text-2xl font-bold mt-0.5" style={{ color: 'var(--dh-text)' }}>
+                ${stats && stats.totalTransactions > 0 ? (stats.totalRevenue / stats.totalTransactions).toFixed(2) : '0.00'}
+              </p>
+              <p className="text-xs" style={{ color: 'var(--dh-text-3)' }}>Per transaction</p>
+            </div>
+          </div>
         </div>
 
-        {/* Monthly Stats */}
+        {/* Charts */}
+        {(trends.length > 0 || providerStats.length > 0) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+            {trends.length > 0 && (
+              <div className="dh-card p-6">
+                <p className="font-bold text-sm mb-1" style={{ color: 'var(--dh-text)' }}>Transaction Trends</p>
+                <p className="text-xs mb-4" style={{ color: 'var(--dh-text-3)' }}>Last 30 days</p>
+                <TransactionTrendChart data={trends} />
+              </div>
+            )}
+            {providerStats.length > 0 && (
+              <div className="dh-card p-6">
+                <p className="font-bold text-sm mb-1" style={{ color: 'var(--dh-text)' }}>By Service Provider</p>
+                <p className="text-xs mb-4" style={{ color: 'var(--dh-text-3)' }}>Revenue distribution</p>
+                <ServiceProviderChart data={providerStats} />
+              </div>
+            )}
+          </div>
+        )}
+
         {monthlyStats.length > 0 && (
-          <div className="mb-8">
+          <div className="dh-card p-6 mb-6">
+            <p className="font-bold text-sm mb-1" style={{ color: 'var(--dh-text)' }}>Monthly Performance</p>
+            <p className="text-xs mb-4" style={{ color: 'var(--dh-text-3)' }}>Last 12 months</p>
             <MonthlyStatsChart data={monthlyStats} />
           </div>
         )}
 
-        {/* Empty State */}
-        {!stats || stats.totalTransactions === 0 ? (
-          <div className="bg-white rounded-lg shadow p-12 text-center">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">No Data Yet</h3>
-            <p className="text-gray-600 mb-6">
-              Start by adding customers and creating transactions to see analytics here.
-            </p>
-            <div className="space-y-2 text-sm text-gray-600">
-              <p>✓ Full system access granted</p>
-              <p>✓ Manage all users and transactions</p>
-              <p>✓ View comprehensive analytics</p>
-              <p>✓ Configure system settings</p>
+        {/* Empty state */}
+        {(!stats || stats.totalTransactions === 0) && (
+          <div className="dh-card p-12 text-center">
+            <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center mb-4" style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
+              <Activity className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--dh-text)' }}>No Activity Yet</h3>
+            <p className="text-sm mb-6" style={{ color: 'var(--dh-text-2)' }}>Start by adding customers and recording transactions to see analytics here.</p>
+            <div className="flex justify-center gap-3">
+              <a href="/customers/new" className="dh-btn-primary">Add Customer</a>
+              <a href="/transactions/new" className="dh-btn-primary" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>New Transaction</a>
             </div>
           </div>
-        ) : null}
+        )}
       </div>
     </div>
   );

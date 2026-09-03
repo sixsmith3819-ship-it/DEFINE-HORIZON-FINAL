@@ -17,100 +17,114 @@ export default async function ProductsPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Products & Stock</h1>
-          <p className="text-sm text-gray-600">Manage product inventory</p>
+    <div className="p-6" style={{ background: 'var(--dh-bg)', minHeight: '100vh' }}>
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--dh-text)' }}>Products & Stock</h1>
+            <p className="text-sm mt-0.5" style={{ color: 'var(--dh-text-2)' }}>Manage product inventory</p>
+          </div>
+          <Link href="/products/new" className="dh-btn-primary">
+            <Plus className="w-5 h-5" />
+            Add Product
+          </Link>
         </div>
-        <Link href="/products/new" className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-          <Plus className="w-5 h-5" />
-          Add Product
-        </Link>
-      </div>
 
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow p-4">
-            <div className="flex items-center gap-3">
-              <Package className="w-8 h-8 text-blue-600" />
+        {/* Stats */}
+        {stats && (
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+            <div className="dh-card stat-card p-5 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
+                <Package className="w-5 h-5 text-white" />
+              </div>
               <div>
-                <p className="text-sm text-gray-600">Total Products</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalProducts}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--dh-text-3)' }}>Products</p>
+                <p className="text-2xl font-bold" style={{ color: 'var(--dh-text)' }}>{stats.totalProducts}</p>
               </div>
             </div>
+            <div className="dh-card stat-card p-5">
+              <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: 'var(--dh-text-3)' }}>Total Stock</p>
+              <p className="text-2xl font-bold" style={{ color: 'var(--dh-text)' }}>{stats.totalQuantity}</p>
+            </div>
+            <div className="dh-card stat-card p-5">
+              <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: 'var(--dh-text-3)' }}>Low Stock</p>
+              <p className="text-2xl font-bold" style={{ color: '#f59e0b' }}>{stats.lowStock}</p>
+            </div>
+            <div className="dh-card stat-card p-5">
+              <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: 'var(--dh-text-3)' }}>Out of Stock</p>
+              <p className="text-2xl font-bold" style={{ color: '#ef4444' }}>{stats.outOfStock}</p>
+            </div>
+            <div className="dh-card stat-card p-5">
+              <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: 'var(--dh-text-3)' }}>Total Value</p>
+              <p className="text-2xl font-bold" style={{ color: '#10b981' }}>${stats.totalValue.toFixed(2)}</p>
+            </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-sm text-gray-600">Total Stock</p>
-            <p className="text-2xl font-bold text-gray-900">{stats.totalQuantity}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-sm text-gray-600">Low Stock</p>
-            <p className="text-2xl font-bold text-yellow-600">{stats.lowStock}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-sm text-gray-600">Out of Stock</p>
-            <p className="text-2xl font-bold text-red-600">{stats.outOfStock}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-sm text-gray-600">Total Value</p>
-            <p className="text-2xl font-bold text-green-600">${stats.totalValue.toFixed(2)}</p>
-          </div>
-        </div>
-      )}
+        )}
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Brand/Model</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {products.map((product) => {
-              const stockStatus = getStockStatus(product.quantity, product.lowStockThreshold);
-              return (
-                <tr key={product.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{product.productName}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{product.category}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{product.brand} {product.model}</td>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">${product.sellingPrice.toFixed(2)}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{product.quantity}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${stockStatus.color}`}>
-                      {stockStatus.label}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <Link
-                        href={`/products/${product.id}/adjust-stock`}
-                        className="p-1.5 text-green-600 hover:bg-green-50 rounded transition"
-                        title="Adjust Stock"
-                      >
-                        <TrendingUp className="w-4 h-4" />
-                      </Link>
-                      <Link
-                        href={`/products/${product.id}/edit`}
-                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition"
-                        title="Edit"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Link>
-                      <DeleteProductButton productId={product.id} productName={product.productName} />
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        {/* Table */}
+        <div className="dh-card overflow-hidden">
+          {products.length === 0 ? (
+            <div className="p-12 text-center">
+              <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center mb-4" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>
+                <Package className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="font-bold text-lg mb-2" style={{ color: 'var(--dh-text)' }}>No Products Yet</h3>
+              <p className="text-sm mb-4" style={{ color: 'var(--dh-text-2)' }}>Add your first product to start tracking inventory.</p>
+              <Link href="/products/new" className="dh-btn-primary">Add Product</Link>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="dh-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Brand / Model</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map((product) => {
+                    const stockStatus = getStockStatus(product.quantity, product.lowStockThreshold)
+                    return (
+                      <tr key={product.id}>
+                        <td className="font-semibold" style={{ color: 'var(--dh-text)' }}>{product.productName}</td>
+                        <td>{product.category}</td>
+                        <td style={{ color: 'var(--dh-text-2)' }}>{product.brand} {product.model}</td>
+                        <td className="font-semibold">${product.sellingPrice.toFixed(2)}</td>
+                        <td>
+                          <span className={`font-bold ${product.quantity === 0 ? 'text-red-600' : product.quantity <= product.lowStockThreshold ? 'text-amber-600' : ''}`}>
+                            {product.quantity}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`badge ${stockStatus.label === 'In Stock' ? 'badge-success' : stockStatus.label === 'Low Stock' ? 'badge-warning' : 'badge-error'}`}>
+                            {stockStatus.label}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="flex items-center gap-2">
+                            <Link href={`/products/${product.id}/adjust-stock`} className="p-1.5 rounded-lg transition" style={{ color: '#10b981' }} title="Adjust Stock">
+                              <TrendingUp className="w-4 h-4" />
+                            </Link>
+                            <Link href={`/products/${product.id}/edit`} className="p-1.5 rounded-lg transition" style={{ color: 'var(--dh-primary)' }} title="Edit">
+                              <Edit className="w-4 h-4" />
+                            </Link>
+                            <DeleteProductButton productId={product.id} productName={product.productName} />
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

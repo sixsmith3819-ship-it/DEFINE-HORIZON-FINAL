@@ -29,54 +29,50 @@ export default function TransactionList({ transactions, pagination }: Transactio
 
   if (transactions.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-12 text-center">
-        <p className="text-gray-500">No transactions found</p>
+      <div className="dh-card p-12 text-center">
+        <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center mb-4" style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
+          <span className="text-white text-2xl">$</span>
+        </div>
+        <h3 className="font-bold text-lg mb-2" style={{ color: 'var(--dh-text)' }}>No Transactions Found</h3>
+        <p className="text-sm" style={{ color: 'var(--dh-text-2)' }}>Transactions recorded here will appear in this list.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="dh-card overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="dh-table">
+          <thead>
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Transaction ID</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Provider</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+              <th>Transaction ID</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Provider</th>
+              <th>Amount</th>
+              <th>Type</th>
+              <th>Status</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody>
             {transactions.map((txn) => (
-              <tr
-                key={txn.id}
-                onClick={() => router.push(`/transactions/${txn.id}`)}
-                className="hover:bg-gray-50 cursor-pointer"
-              >
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
-                  {txn.id.substring(0, 8)}...
+              <tr key={txn.id} onClick={() => router.push(`/transactions/${txn.id}`)} className="cursor-pointer">
+                <td>
+                  <span className="font-mono text-xs font-semibold" style={{ color: 'var(--dh-primary)' }}>
+                    #{txn.id.substring(0, 8)}
+                  </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {new Date(txn.createdAt).toLocaleDateString()}
+                <td>{new Date(txn.createdAt).toLocaleDateString()}</td>
+                <td className="font-medium">{txn.customer.customerName || 'Unknown Customer'}</td>
+                <td>{txn.serviceProvider}</td>
+                <td className="font-semibold">${txn.amount.toFixed(2)}</td>
+                <td>
+                  <span className={`badge ${txn.transactionType === 'local' ? 'badge-info' : 'badge-cyan'}`}>
+                    {txn.transactionType}
+                  </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {txn.customer.customerName || "Unknown Customer"}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {txn.serviceProvider}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  ${txn.amount.toFixed(2)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
-                  {txn.transactionType}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusBadge(txn.status)}`}>
+                <td>
+                  <span className={`badge ${txn.status === 'completed' ? 'badge-success' : txn.status === 'pending' ? 'badge-warning' : txn.status === 'failed' ? 'badge-error' : 'badge-gray'}`}>
                     {txn.status}
                   </span>
                 </td>
@@ -87,27 +83,21 @@ export default function TransactionList({ transactions, pagination }: Transactio
       </div>
 
       {pagination.totalPages > 1 && (
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-          <div className="text-sm text-gray-700">
+        <div className="px-6 py-4 flex items-center justify-between" style={{ borderTop: '1px solid var(--dh-border)', background: 'var(--dh-surface-2)' }}>
+          <div className="text-sm" style={{ color: 'var(--dh-text-2)' }}>
             Showing {transactions.length} of {pagination.totalCount} transactions
           </div>
           <div className="flex gap-2">
             {pagination.currentPage > 1 && (
-              <Link
-                href={`?page=${pagination.currentPage - 1}`}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
-              >
+              <Link href={`?page=${pagination.currentPage - 1}`} className="px-4 py-2 rounded-lg text-sm font-medium transition" style={{ border: '1px solid var(--dh-border)', color: 'var(--dh-text-2)' }}>
                 Previous
               </Link>
             )}
-            <span className="px-4 py-2 text-sm">
-              Page {pagination.currentPage} of {pagination.totalPages}
+            <span className="px-4 py-2 text-sm rounded-lg font-semibold" style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white' }}>
+              {pagination.currentPage} / {pagination.totalPages}
             </span>
             {pagination.currentPage < pagination.totalPages && (
-              <Link
-                href={`?page=${pagination.currentPage + 1}`}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
-              >
+              <Link href={`?page=${pagination.currentPage + 1}`} className="px-4 py-2 rounded-lg text-sm font-medium transition" style={{ border: '1px solid var(--dh-border)', color: 'var(--dh-text-2)' }}>
                 Next
               </Link>
             )}

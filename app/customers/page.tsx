@@ -10,25 +10,21 @@ import Link from 'next/link';
 import { SearchAndFilter } from '@/components/customers/SearchAndFilter';
 import { Loader } from 'lucide-react';
 
-// Badge component for status and type
+// Badge components
 function StatusBadge({ status }: { status: CustomerStatus }) {
-  const color = status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800';
-  const label = status === 'active' ? 'Active' : 'Inactive';
-  return <span className={`px-2 py-1 rounded-full text-xs font-medium ${color}`}>{label}</span>;
+  return <span className={`badge ${status === 'active' ? 'badge-success' : 'badge-gray'}`}>{status === 'active' ? 'Active' : 'Inactive'}</span>
 }
 
 function TypeBadge({ type }: { type: CustomerType }) {
-  const color = type === 'individual' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800';
-  const label = type === 'individual' ? 'Individual' : 'Business';
-  return <span className={`px-2 py-1 rounded-full text-xs font-medium ${color}`}>{label}</span>;
+  return <span className={`badge ${type === 'individual' ? 'badge-info' : 'badge-purple'}`}>{type === 'individual' ? 'Individual' : 'Business'}</span>
 }
 
 // Loading skeleton component
 function LoadingSkeleton() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="h-16 bg-gray-200 rounded animate-pulse" />
+        <div key={i} className="h-14 skeleton" />
       ))}
     </div>
   );
@@ -83,7 +79,6 @@ function CustomersPageInner() {
     const queryString = params.toString();
     const newUrl = `/customers?${queryString}`;
     
-    // Use shallow routing to avoid page reload
     window.history.replaceState(null, '', newUrl);
   }, [page, searchTerm, filters, sortBy]);
 
@@ -126,14 +121,12 @@ function CustomersPageInner() {
     setDebouncePending(true);
     setIsSearching(true);
 
-    // Clear existing timer
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
-    // Set new timer for 300ms debounce
     debounceTimerRef.current = setTimeout(() => {
-      setPage(1); // Reset to page 1 on new search
+      setPage(1);
       setDebouncePending(false);
     }, 300);
   };
@@ -141,21 +134,18 @@ function CustomersPageInner() {
   // Handle filter changes
   const handleFilterChange = (newFilters: CustomerFilters) => {
     setFilters(newFilters);
-    setPage(1); // Reset to page 1 on filter change
+    setPage(1);
   };
 
   // Handle sort changes
   const handleSortChange = (newSort: SortField) => {
     setSortBy(newSort);
-    setPage(1); // Reset to page 1 on sort change
+    setPage(1);
   };
 
   // Get customer display name
   const getCustomerName = (customer: Customer) => {
-    if (customer.customerType === 'individual') {
-      return `${customer.firstName} ${customer.lastName}`;
-    }
-    return customer.businessName;
+    return (customer as any).customerName || (customer as any).customer_name || (customer.customerType === 'individual' ? `${(customer as any).firstName || ''} ${(customer as any).lastName || ''}`.trim() : (customer as any).businessName) || 'Unknown'
   };
 
   // Format date
@@ -168,16 +158,16 @@ function CustomersPageInner() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-6">
       <div className="max-w-7xl mx-auto">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Customers</h1>
-          <p className="text-gray-600">Manage and view your customer database</p>
+          <h1 className="text-3xl font-bold mb-1" style={{ color: 'var(--dh-text)' }}>Customers</h1>
+          <p style={{ color: 'var(--dh-text-2)' }}>Manage and view your customer database</p>
         </div>
 
         {/* Search and Filter Controls */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
+        <div className="dh-card p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mb-4">
             <div className="flex-1 w-full">
               <SearchAndFilter
@@ -191,7 +181,7 @@ function CustomersPageInner() {
             </div>
             <Link
               href="/customers/new"
-              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition whitespace-nowrap"
+              className="dh-btn-primary whitespace-nowrap"
             >
               + New Customer
             </Link>
@@ -199,7 +189,7 @@ function CustomersPageInner() {
 
           {/* Search Feedback */}
           {(debouncePending || isSearching) && (
-            <div className="flex items-center gap-2 text-blue-600 text-sm">
+            <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--dh-primary)' }}>
               <Loader className="w-4 h-4 animate-spin" />
               <span>Searching...</span>
             </div>
@@ -208,14 +198,14 @@ function CustomersPageInner() {
 
         {/* Error Display */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <h3 className="text-red-800 font-semibold">Error loading customers</h3>
-            <p className="text-red-700 text-sm">{error}</p>
+          <div className="rounded-xl px-4 py-3 mb-6" style={{ background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca' }}>
+            <h3 className="font-semibold text-sm">Error loading customers</h3>
+            <p className="text-sm mt-0.5">{error}</p>
           </div>
         )}
 
-        {/* Results Count with Search Feedback */}
-        <div className="text-sm text-gray-600 mb-6">
+        {/* Results Count */}
+        <div className="text-sm mb-4" style={{ color: 'var(--dh-text-2)' }}>
           {isLoading ? (
             <span>Loading...</span>
           ) : totalCount === 0 ? (
@@ -226,7 +216,7 @@ function CustomersPageInner() {
             </span>
           ) : (
             <>
-              {searchTerm && <span>Showing {totalCount} results for '{searchTerm}'</span>}
+              {searchTerm && <span>Showing {totalCount} results for &lsquo;{searchTerm}&rsquo;</span>}
               {!searchTerm && (
                 <>
                   Showing {(page - 1) * 25 + 1} to {Math.min(page * 25, totalCount)} of {totalCount} customers
@@ -241,8 +231,8 @@ function CustomersPageInner() {
 
         {/* Empty State */}
         {!isLoading && customers.length === 0 && !error && (
-          <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
-            <p className="text-gray-600 mb-4">
+          <div className="dh-card p-12 text-center">
+            <p className="mb-4" style={{ color: 'var(--dh-text-2)' }}>
               {searchTerm
                 ? `No customers match "${searchTerm}"`
                 : 'No customers found'}
@@ -251,14 +241,15 @@ function CustomersPageInner() {
               {searchTerm && (
                 <button
                   onClick={() => handleSearch('')}
-                  className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition"
+                  className="px-4 py-2 rounded-lg text-sm font-medium transition"
+                  style={{ background: 'var(--dh-surface-2)', color: 'var(--dh-text-2)', border: '1px solid var(--dh-border)' }}
                 >
                   Clear Search
                 </button>
               )}
               <Link
                 href="/customers/new"
-                className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                className="dh-btn-primary"
               >
                 Create your first customer
               </Link>
@@ -268,57 +259,47 @@ function CustomersPageInner() {
 
         {/* Customer Table / List */}
         {!isLoading && customers.length > 0 && (
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            {/* Desktop Table View (≥1200px) - All columns visible */}
+          <div className="dh-card overflow-hidden">
+            {/* Desktop Table View (≥1200px) */}
             <div className="hidden xl:block overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+              <table className="dh-table">
+                <thead>
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Email</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Phone</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Type</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Created</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Action</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
+                <tbody>
                   {customers.map((customer) => (
                     <tr
                       key={customer.id}
-                      className="hover:bg-blue-50 transition-colors duration-150 cursor-pointer"
+                      className="cursor-pointer"
                       onClick={() => router.push(`/customers/${customer.id}`)}
                     >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {getCustomerName(customer)}
-                        </div>
+                      <td className="font-medium" style={{ color: 'var(--dh-text)' }}>
+                        {getCustomerName(customer)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600">{customer.email}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600">{customer.phone}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td>{customer.email}</td>
+                      <td>{customer.phone}</td>
+                      <td>
                         <TypeBadge type={customer.customerType} />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td>
                         <StatusBadge status={customer.status} />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600">
-                          {formatDate(customer.createdAt)}
-                        </div>
-                      </td>
+                      <td>{formatDate(customer.createdAt)}</td>
                       <td
-                        className="px-6 py-4 whitespace-nowrap text-sm"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Link
                           href={`/customers/${customer.id}`}
-                          className="text-blue-600 hover:text-blue-800 font-medium hover:underline transition-colors"
+                          className="text-sm font-semibold hover:underline"
+                          style={{ color: 'var(--dh-primary)' }}
                         >
                           View
                         </Link>
@@ -329,47 +310,45 @@ function CustomersPageInner() {
               </table>
             </div>
 
-            {/* Tablet Table View (768-1199px) - Condensed, hide non-essential columns */}
+            {/* Tablet Table View (768-1199px) */}
             <div className="hidden md:block xl:hidden overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+              <table className="dh-table">
+                <thead>
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Contact</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Type</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Action</th>
+                    <th>Name</th>
+                    <th>Contact</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
+                <tbody>
                   {customers.map((customer) => (
                     <tr
                       key={customer.id}
-                      className="hover:bg-blue-50 transition-colors duration-150 cursor-pointer"
+                      className="cursor-pointer"
                       onClick={() => router.push(`/customers/${customer.id}`)}
                     >
-                      <td className="px-4 py-3">
-                        <div className="text-sm font-medium text-gray-900">
-                          {getCustomerName(customer)}
-                        </div>
+                      <td className="font-medium" style={{ color: 'var(--dh-text)' }}>
+                        {getCustomerName(customer)}
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="text-sm text-gray-600">{customer.email}</div>
-                        <div className="text-xs text-gray-500">{customer.phone}</div>
+                      <td>
+                        <div>{customer.email}</div>
+                        <div className="text-xs" style={{ color: 'var(--dh-text-3)' }}>{customer.phone}</div>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
+                      <td>
                         <TypeBadge type={customer.customerType} />
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
+                      <td>
                         <StatusBadge status={customer.status} />
                       </td>
                       <td
-                        className="px-4 py-3 whitespace-nowrap text-sm"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Link
                           href={`/customers/${customer.id}`}
-                          className="text-blue-600 hover:text-blue-800 font-medium hover:underline transition-colors"
+                          className="text-sm font-semibold hover:underline"
+                          style={{ color: 'var(--dh-primary)' }}
                         >
                           View
                         </Link>
@@ -380,33 +359,33 @@ function CustomersPageInner() {
               </table>
             </div>
 
-            {/* Mobile Card View (<768px) - Essential info with 44px touch targets */}
-            <div className="md:hidden divide-y divide-gray-200">
+            {/* Mobile Card View (<768px) */}
+            <div className="md:hidden divide-y" style={{ borderColor: 'var(--dh-border)' }}>
               {customers.map((customer) => (
                 <Link
                   key={customer.id}
                   href={`/customers/${customer.id}`}
-                  className="block p-5 hover:bg-blue-50 active:bg-blue-100 transition-colors duration-150 min-h-[120px]"
+                  className="block p-5 transition-colors duration-150 min-h-[120px] hover:bg-slate-50"
                 >
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1 min-w-0 pr-3">
-                      <h3 className="text-base font-semibold text-gray-900 truncate">
+                      <h3 className="text-base font-semibold truncate" style={{ color: 'var(--dh-text)' }}>
                         {getCustomerName(customer)}
                       </h3>
-                      <p className="text-sm text-gray-600 mt-1 truncate">{customer.email}</p>
+                      <p className="text-sm mt-1 truncate" style={{ color: 'var(--dh-text-2)' }}>{customer.email}</p>
                     </div>
                     <div className="flex-shrink-0">
                       <StatusBadge status={customer.status} />
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-gray-600 mb-3">
+                  <div className="flex items-center gap-3 text-sm mb-3" style={{ color: 'var(--dh-text-2)' }}>
                     <span className="truncate">{customer.phone}</span>
-                    <span className="text-gray-400">•</span>
+                    <span style={{ color: 'var(--dh-text-3)' }}>•</span>
                     <TypeBadge type={customer.customerType} />
                   </div>
                   <div className="flex justify-between items-center">
-                    <p className="text-xs text-gray-500">Created {formatDate(customer.createdAt)}</p>
-                    <span className="text-blue-600 font-medium text-sm inline-flex items-center min-h-[44px] min-w-[44px] justify-center">
+                    <p className="text-xs" style={{ color: 'var(--dh-text-3)' }}>Created {formatDate(customer.createdAt)}</p>
+                    <span className="font-semibold text-sm inline-flex items-center min-h-[44px] min-w-[44px] justify-center" style={{ color: 'var(--dh-primary)' }}>
                       View →
                     </span>
                   </div>
@@ -422,13 +401,13 @@ function CustomersPageInner() {
             {page > 1 && (
               <button
                 onClick={() => setPage(page - 1)}
-                className="px-3 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition"
+                className="px-3 py-2 rounded-lg text-sm font-medium transition"
+                style={{ background: 'var(--dh-surface)', border: '1px solid var(--dh-border)', color: 'var(--dh-text-2)' }}
               >
                 ← Previous
               </button>
             )}
 
-            {/* Page numbers */}
             <div className="flex gap-1">
               {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
                 const pageNum = i + 1;
@@ -436,11 +415,11 @@ function CustomersPageInner() {
                   <button
                     key={pageNum}
                     onClick={() => setPage(pageNum)}
-                    className={`px-3 py-2 rounded transition ${
-                      pageNum === page
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                    }`}
+                    className="px-3 py-2 rounded-lg text-sm font-medium transition"
+                    style={pageNum === page
+                      ? { background: 'var(--dh-primary)', color: 'white' }
+                      : { background: 'var(--dh-surface)', border: '1px solid var(--dh-border)', color: 'var(--dh-text-2)' }
+                    }
                   >
                     {pageNum}
                   </button>
@@ -451,7 +430,8 @@ function CustomersPageInner() {
             {page < totalPages && (
               <button
                 onClick={() => setPage(page + 1)}
-                className="px-3 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition"
+                className="px-3 py-2 rounded-lg text-sm font-medium transition"
+                style={{ background: 'var(--dh-surface)', border: '1px solid var(--dh-border)', color: 'var(--dh-text-2)' }}
               >
                 Next →
               </button>
@@ -467,7 +447,7 @@ function CustomersPageInner() {
 // Wrap in Suspense to handle useSearchParams
 export default function CustomersPage() {
   return (
-    <Suspense fallback={<div className="p-8"><div className="max-w-7xl mx-auto"><LoadingSkeleton /></div></div>}>
+    <Suspense fallback={<div className="p-6"><div className="max-w-7xl mx-auto"><LoadingSkeleton /></div></div>}>
       <CustomersPageInner />
     </Suspense>
   );

@@ -25,56 +25,54 @@ export default async function TransactionsPage({
 
   if (!result.success || result.error) {
     return (
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Transactions</h1>
-            <p className="text-sm text-gray-600">Manage financial transactions</p>
+      <div className="p-6" style={{ background: 'var(--dh-bg)', minHeight: '100vh' }}>
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-2xl font-bold" style={{ color: 'var(--dh-text)' }}>Transactions</h1>
+              <p className="text-sm mt-0.5" style={{ color: 'var(--dh-text-2)' }}>Financial transaction records</p>
+            </div>
+            <Link href="/transactions/new" className="dh-btn-primary">
+              <Plus className="w-4 h-4" />
+              New Transaction
+            </Link>
           </div>
-          <Link
-            href="/transactions/new"
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            New Transaction
-          </Link>
-        </div>
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
-          Error: {result.error || 'Failed to load transactions'}
+          <div className="dh-card p-4" style={{ borderLeft: '4px solid var(--dh-error)', color: '#991b1b' }}>
+            Error: {result.error || 'Failed to load transactions'}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Transactions</h1>
-          <p className="text-sm text-gray-600">Manage financial transactions</p>
+    <div className="p-6" style={{ background: 'var(--dh-bg)', minHeight: '100vh' }}>
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--dh-text)' }}>Transactions</h1>
+            <p className="text-sm mt-0.5" style={{ color: 'var(--dh-text-2)' }}>Financial transaction records</p>
+          </div>
+          <Link href="/transactions/new" className="dh-btn-primary">
+            <Plus className="w-4 h-4" />
+            New Transaction
+          </Link>
         </div>
-        <Link
-          href="/transactions/new"
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          New Transaction
-        </Link>
+
+        <Suspense fallback={<div className="dh-card p-4 mb-4"><div className="skeleton h-10" /></div>}>
+          <SearchAndFilter />
+        </Suspense>
+
+        <TransactionList
+          transactions={result.transactions}
+          pagination={{
+            totalCount: result.totalCount,
+            pageSize: result.pageSize,
+            currentPage: result.currentPage,
+            totalPages: result.totalPages,
+          }}
+        />
       </div>
-
-      <Suspense fallback={<div>Loading filters...</div>}>
-        <SearchAndFilter />
-      </Suspense>
-
-      <TransactionList 
-        transactions={result.transactions} 
-        pagination={{
-          totalCount: result.totalCount,
-          pageSize: result.pageSize,
-          currentPage: result.currentPage,
-          totalPages: result.totalPages,
-        }}
-      />
     </div>
   );
 }
