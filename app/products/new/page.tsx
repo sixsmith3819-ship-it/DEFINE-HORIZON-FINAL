@@ -6,11 +6,15 @@ import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { createProduct } from '@/lib/actions/products';
 import { ProductCategory, ProductStatus } from '@/lib/types/product';
+import { FieldError, FormErrorBanner } from '@/components/ui';
+import { validateProductFormData, hasValidationErrors } from '@/lib/validation/product-validation';
 
 export default function NewProductPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const [touched, setTouched] = useState<Set<string>>(new Set());
+  const [submitError, setSubmitError] = useState('');
   const [formData, setFormData] = useState({
     productName: '',
     category: ProductCategory.Laptop,
@@ -24,10 +28,24 @@ export default function NewProductPage() {
     status: ProductStatus.Active,
   });
 
+  const handleBlur = (fieldName: string) => {
+    setTouched(prev => new Set(prev).add(fieldName));
+    const allErrors = validateProductFormData(formData);
+    setErrors(prev => ({ ...prev, [fieldName]: (allErrors as any)[fieldName] }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrors({});
+    setSubmitError('');
+
+    const allErrors = validateProductFormData(formData);
+    if (hasValidationErrors(allErrors)) {
+      setErrors(allErrors);
+      setIsSubmitting(false);
+      return;
+    }
 
     const result = await createProduct(formData);
 
@@ -38,7 +56,7 @@ export default function NewProductPage() {
       setErrors(result.validationErrors);
       setIsSubmitting(false);
     } else {
-      alert(result.error || 'Failed to create product');
+      setSubmitError(result.error || 'Failed to create product');
       setIsSubmitting(false);
     }
   };
@@ -55,6 +73,8 @@ export default function NewProductPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">
+        <FormErrorBanner message={submitError} />
+
         <div className="grid grid-cols-2 gap-6">
           <div className="col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -64,10 +84,12 @@ export default function NewProductPage() {
               type="text"
               value={formData.productName}
               onChange={(e) => setFormData({ ...formData, productName: e.target.value })}
+              onBlur={() => handleBlur('productName')}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="e.g., MacBook Pro 14"
+              aria-describedby={errors.productName ? 'productName-error' : undefined}
             />
-            {errors.productName && <p className="text-red-500 text-sm mt-1">{errors.productName[0]}</p>}
+            <FieldError id="productName-error" message={errors.productName?.[0]} />
           </div>
 
           <div>
@@ -77,7 +99,9 @@ export default function NewProductPage() {
             <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value as ProductCategory })}
+              onBlur={() => handleBlur('category')}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              aria-describedby={errors.category ? 'category-error' : undefined}
             >
               <option value={ProductCategory.Laptop}>Laptop</option>
               <option value={ProductCategory.Phone}>Phone</option>
@@ -85,7 +109,7 @@ export default function NewProductPage() {
               <option value={ProductCategory.Charger}>Charger</option>
               <option value={ProductCategory.Accessory}>Accessory</option>
             </select>
-            {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category[0]}</p>}
+            <FieldError id="category-error" message={errors.category?.[0]} />
           </div>
 
           <div>
@@ -133,11 +157,13 @@ export default function NewProductPage() {
                 step="0.01"
                 value={formData.sellingPrice}
                 onChange={(e) => setFormData({ ...formData, sellingPrice: e.target.value })}
+                onBlur={() => handleBlur('sellingPrice')}
                 className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="0.00"
+                aria-describedby={errors.sellingPrice ? 'sellingPrice-error' : undefined}
               />
             </div>
-            {errors.sellingPrice && <p className="text-red-500 text-sm mt-1">{errors.sellingPrice[0]}</p>}
+            <FieldError id="sellingPrice-error" message={errors.sellingPrice?.[0]} />
           </div>
 
           <div>
@@ -149,10 +175,13 @@ export default function NewProductPage() {
                 step="0.01"
                 value={formData.costPrice}
                 onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
+                onBlur={() => handleBlur('costPrice')}
                 className="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="0.00"
+                aria-describedby={errors.costPrice ? 'costPrice-error' : undefined}
               />
             </div>
+            <FieldError id="costPrice-error" message={errors.costPrice?.[0]} />
           </div>
 
           <div>
@@ -163,10 +192,12 @@ export default function NewProductPage() {
               type="number"
               value={formData.quantity}
               onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+              onBlur={() => handleBlur('quantity')}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="0"
+              aria-describedby={errors.quantity ? 'quantity-error' : undefined}
             />
-            {errors.quantity && <p className="text-red-500 text-sm mt-1">{errors.quantity[0]}</p>}
+            <FieldError id="quantity-error" message={errors.quantity?.[0]} />
           </div>
 
           <div>
@@ -177,10 +208,12 @@ export default function NewProductPage() {
               type="number"
               value={formData.lowStockThreshold}
               onChange={(e) => setFormData({ ...formData, lowStockThreshold: e.target.value })}
+              onBlur={() => handleBlur('lowStockThreshold')}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="10"
+              aria-describedby={errors.lowStockThreshold ? 'lowStockThreshold-error' : undefined}
             />
-            {errors.lowStockThreshold && <p className="text-red-500 text-sm mt-1">{errors.lowStockThreshold[0]}</p>}
+            <FieldError id="lowStockThreshold-error" message={errors.lowStockThreshold?.[0]} />
           </div>
 
           <div className="col-span-2">

@@ -6,11 +6,15 @@ import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { createAnnouncement } from '@/lib/actions/announcements';
 import { AnnouncementStatus } from '@/lib/types/announcement';
+import { FieldError, FormErrorBanner } from '@/components/ui';
+import { validateAnnouncementFormData, hasValidationErrors } from '@/lib/validation/announcement-validation';
 
 export default function NewAnnouncementPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const [touched, setTouched] = useState<Set<string>>(new Set());
+  const [submitError, setSubmitError] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     message: '',
@@ -18,10 +22,24 @@ export default function NewAnnouncementPage() {
     expiryDate: '',
   });
 
+  const handleBlur = (fieldName: string) => {
+    setTouched(prev => new Set(prev).add(fieldName));
+    const allErrors = validateAnnouncementFormData(formData);
+    setErrors(prev => ({ ...prev, [fieldName]: (allErrors as any)[fieldName] }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrors({});
+    setSubmitError('');
+
+    const allErrors = validateAnnouncementFormData(formData);
+    if (hasValidationErrors(allErrors)) {
+      setErrors(allErrors);
+      setIsSubmitting(false);
+      return;
+    }
 
     const result = await createAnnouncement({
       title: formData.title,
@@ -37,7 +55,7 @@ export default function NewAnnouncementPage() {
       setErrors(result.validationErrors);
       setIsSubmitting(false);
     } else {
-      alert(result.error || 'Failed to create announcement');
+      setSubmitError(result.error || 'Failed to create announcement');
       setIsSubmitting(false);
     }
   };
@@ -55,6 +73,8 @@ export default function NewAnnouncementPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="dh-card p-6 space-y-5">
+          <FormErrorBanner message={submitError} />
+
           <div>
             <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--dh-text-2)' }}>
               Title <span style={{ color: '#ef4444' }}>*</span>
@@ -63,11 +83,13 @@ export default function NewAnnouncementPage() {
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              onBlur={() => handleBlur('title')}
               className="dh-input"
               placeholder="Enter announcement title"
               maxLength={200}
+              aria-describedby={errors.title ? 'title-error' : undefined}
             />
-            {errors.title && <p className="text-xs mt-1" style={{ color: '#ef4444' }}>{errors.title[0]}</p>}
+            <FieldError id="title-error" message={errors.title?.[0]} />
           </div>
 
           <div>
@@ -77,12 +99,14 @@ export default function NewAnnouncementPage() {
             <textarea
               value={formData.message}
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+              onBlur={() => handleBlur('message')}
               className="dh-input"
               placeholder="Enter announcement message"
               rows={5}
               style={{ resize: 'vertical' }}
+              aria-describedby={errors.message ? 'message-error' : undefined}
             />
-            {errors.message && <p className="text-xs mt-1" style={{ color: '#ef4444' }}>{errors.message[0]}</p>}
+            <FieldError id="message-error" message={errors.message?.[0]} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -111,6 +135,7 @@ export default function NewAnnouncementPage() {
                 className="dh-input"
                 min={new Date().toISOString().split('T')[0]}
               />
+              <FieldError id="expiryDate-error" message={errors.expiryDate?.[0]} />
             </div>
           </div>
 

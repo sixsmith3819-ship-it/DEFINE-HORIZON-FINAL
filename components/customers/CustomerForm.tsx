@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { CustomerFormData, CustomerType, ValidationErrors } from '@/lib/types/customer';
+import { FieldError, FormErrorBanner } from '@/components/ui';
+import { validateCustomerFormData, hasValidationErrors } from '@/lib/validation/customer-validation';
 
 interface CustomerFormProps {
   customerType: CustomerType;
@@ -11,6 +13,7 @@ interface CustomerFormProps {
   validationErrors?: ValidationErrors;
   submitButtonText?: string;
   mode?: 'create' | 'edit';
+  serverError?: string;
 }
 
 export function CustomerForm({
@@ -21,6 +24,7 @@ export function CustomerForm({
   validationErrors = {},
   submitButtonText = 'Create Customer',
   mode = 'create',
+  serverError,
 }: CustomerFormProps) {
   const [formData, setFormData] = useState<CustomerFormData>({
     customerType,
@@ -37,8 +41,8 @@ export function CustomerForm({
     address: initialData?.address || '',
   });
 
-  const [localErrors, setLocalErrors] = useState<ValidationErrors>(validationErrors);
-  const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
+  const [errors, setErrors] = useState<ValidationErrors>(validationErrors);
+  const [touched, setTouched] = useState<Set<string>>(new Set());
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -46,22 +50,29 @@ export function CustomerForm({
       ...prev,
       [name]: value,
     }));
-    // Clear error for this field when user starts typing
-    if (localErrors[name]) {
-      setLocalErrors((prev) => ({
-        ...prev,
-        [name]: undefined,
-      }));
+    if (touched.has(name)) {
+      const allErrors = validateCustomerFormData({ ...formData, [name]: value });
+      setErrors(prev => ({ ...prev, [name]: (allErrors as any)[name] }));
     }
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name } = e.target;
-    setTouchedFields((prev) => new Set([...prev, name]));
+  const handleBlur = (fieldName: string) => {
+    setTouched(prev => new Set(prev).add(fieldName));
+    const allErrors = validateCustomerFormData(formData);
+    setErrors(prev => ({ ...prev, [fieldName]: (allErrors as any)[fieldName] }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const allErrors = validateCustomerFormData(formData);
+    if (hasValidationErrors(allErrors)) {
+      setErrors(allErrors as any);
+      const firstErrorKey = Object.keys(allErrors)[0];
+      document.getElementById(firstErrorKey)?.focus();
+      return;
+    }
+
     try {
       await onSubmit(formData);
     } catch (error) {
@@ -76,9 +87,8 @@ export function CustomerForm({
   const baseInputClass = 'w-full px-4 py-2.5 text-sm rounded-lg transition-all duration-200 ease-in-out';
   const normalInputClass = `${baseInputClass} border border-gray-300 bg-white text-gray-900 placeholder-gray-500 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500 disabled:border-gray-200 disabled:cursor-not-allowed`;
   const errorInputClass = `${baseInputClass} border border-red-500 bg-white text-gray-900 placeholder-gray-500 shadow-sm ring-1 ring-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-0 focus:border-red-500 disabled:bg-gray-50 disabled:text-gray-500 disabled:border-gray-200 disabled:cursor-not-allowed`;
-  
+
   const labelClass = 'block text-sm font-semibold text-gray-700 mb-2';
-  const errorMessageClass = 'text-red-600 text-sm font-medium mt-1';
   const optionalClass = 'text-gray-400 font-normal';
   const sectionClass = 'p-6 border border-gray-200 rounded-lg bg-gray-50 space-y-4';
   const sectionHeaderClass = 'text-base font-semibold text-gray-900 -mx-6 -mt-6 px-6 py-3 border-b border-gray-200 bg-gray-100';
@@ -91,12 +101,13 @@ export function CustomerForm({
     isTextarea: boolean = false,
     placeholder?: string
   ) => {
-    const hasError = !!localErrors[name];
+    const hasError = !!(errors as any)[name];
     const value = formData[name] as string;
+    const fieldName = name as string;
 
     return (
-      <div key={name}>
-        <label htmlFor={name} className={labelClass}>
+      <div key={fieldName}>
+        <label htmlFor={fieldName} className={labelClass}>
           {label}
           {isRequired ? (
             <span className="text-red-600 font-bold ml-1">*</span>
@@ -106,38 +117,42 @@ export function CustomerForm({
         </label>
         {isTextarea ? (
           <textarea
-            id={name}
-            name={name}
+            id={fieldName}
+            name={fieldName}
             value={value}
             onChange={handleChange}
-            onBlur={handleBlur}
+            onBlur={() => handleBlur(fieldName)}
             className={hasError ? errorInputClass : normalInputClass}
             disabled={isSubmitting}
             required={isRequired}
             rows={4}
             placeholder={placeholder}
+            aria-describedby={hasError ? `${fieldName}-error` : undefined}
           />
         ) : (
           <input
             type={type}
-            id={name}
-            name={name}
+            id={fieldName}
+            name={fieldName}
             value={value}
             onChange={handleChange}
-            onBlur={handleBlur}
+            onBlur={() => handleBlur(fieldName)}
             className={hasError ? errorInputClass : normalInputClass}
             disabled={isSubmitting}
             required={isRequired}
             placeholder={placeholder}
+            aria-describedby={hasError ? `${fieldName}-error` : undefined}
           />
         )}
-        {hasError && <p className={errorMessageClass}>{localErrors[name]}</p>}
+        <FieldError id={`${fieldName}-error`} message={(errors as any)[fieldName]} />
       </div>
     );
   };
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl mx-auto w-full space-y-4">
+      <FormErrorBanner message={serverError} />
+
       {/* Type Selector - Only show in create mode for new customers */}
       {mode === 'create' && (
         <div className={sectionClass}>

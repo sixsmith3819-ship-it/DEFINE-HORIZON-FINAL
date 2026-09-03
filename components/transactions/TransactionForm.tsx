@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { createTransaction, getCommissionRates } from '@/lib/actions/transactions';
 import { getCustomers } from '@/lib/actions/customers';
 import { ServiceProvider, TransactionType } from '@/lib/types/transaction';
-import { calculateCommission } from '@/lib/validation/transaction-validation';
+import { calculateCommission, validateTransactionFormData, hasValidationErrors } from '@/lib/validation/transaction-validation';
+import { FieldError, FormErrorBanner } from '@/components/ui';
 
 interface TransactionFormProps {
   onSuccess: (transactionId: string) => void;
@@ -14,9 +15,10 @@ export default function TransactionForm({ onSuccess }: TransactionFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Set<string>>(new Set());
   const [customers, setCustomers] = useState<any[]>([]);
   const [loadingCustomers, setLoadingCustomers] = useState(true);
-  
+
   const [formData, setFormData] = useState({
     customerId: '',
     serviceProvider: '' as ServiceProvider,
@@ -66,8 +68,21 @@ export default function TransactionForm({ onSuccess }: TransactionFormProps) {
     }
   }, [formData.amount, formData.transactionType, rates]);
 
+  const handleBlur = (fieldName: string) => {
+    setTouched(prev => new Set(prev).add(fieldName));
+    const allErrors = validateTransactionFormData(formData);
+    setErrors(prev => ({ ...prev, [fieldName]: (allErrors as any)[fieldName] }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const allErrors = validateTransactionFormData(formData);
+    if (hasValidationErrors(allErrors)) {
+      setErrors(allErrors as any);
+      return;
+    }
+
     setLoading(true);
     setError('');
     setErrors({});
@@ -89,9 +104,7 @@ export default function TransactionForm({ onSuccess }: TransactionFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-4">
-      {error && (
-        <div className="p-4 bg-red-50 text-red-800 rounded-lg">{error}</div>
-      )}
+      <FormErrorBanner message={error} />
 
       {/* Customer Selection */}
       <div>
@@ -101,8 +114,10 @@ export default function TransactionForm({ onSuccess }: TransactionFormProps) {
         <select
           value={formData.customerId}
           onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
+          onBlur={() => handleBlur('customerId')}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           disabled={loadingCustomers}
+          aria-describedby={errors.customerId ? 'customerId-error' : undefined}
         >
           <option value="">
             {loadingCustomers ? 'Loading customers...' : 'Select customer...'}
@@ -113,9 +128,7 @@ export default function TransactionForm({ onSuccess }: TransactionFormProps) {
             </option>
           ))}
         </select>
-        {errors.customerId && (
-          <p className="text-sm text-red-600 mt-1">{errors.customerId}</p>
-        )}
+        <FieldError id="customerId-error" message={errors.customerId} />
       </div>
 
       {/* Service Provider */}
@@ -126,7 +139,9 @@ export default function TransactionForm({ onSuccess }: TransactionFormProps) {
         <select
           value={formData.serviceProvider}
           onChange={(e) => setFormData({ ...formData, serviceProvider: e.target.value as ServiceProvider })}
+          onBlur={() => handleBlur('serviceProvider')}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          aria-describedby={errors.serviceProvider ? 'serviceProvider-error' : undefined}
         >
           <option value="">Select provider...</option>
           <option value={ServiceProvider.EcoCash}>EcoCash</option>
@@ -135,9 +150,7 @@ export default function TransactionForm({ onSuccess }: TransactionFormProps) {
           <option value={ServiceProvider.MOOVAR}>MOOVAR</option>
           <option value={ServiceProvider.WorldRemit}>WorldRemit</option>
         </select>
-        {errors.serviceProvider && (
-          <p className="text-sm text-red-600 mt-1">{errors.serviceProvider}</p>
-        )}
+        <FieldError id="serviceProvider-error" message={errors.serviceProvider} />
       </div>
 
       {/* Transaction Type */}
@@ -167,9 +180,7 @@ export default function TransactionForm({ onSuccess }: TransactionFormProps) {
             <span>International</span>
           </label>
         </div>
-        {errors.transactionType && (
-          <p className="text-sm text-red-600 mt-1">{errors.transactionType}</p>
-        )}
+        <FieldError id="transactionType-error" message={errors.transactionType} />
       </div>
 
       {/* Amount */}
@@ -181,12 +192,12 @@ export default function TransactionForm({ onSuccess }: TransactionFormProps) {
           type="text"
           value={formData.amount}
           onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+          onBlur={() => handleBlur('amount')}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           placeholder="0.00"
+          aria-describedby={errors.amount ? 'amount-error' : undefined}
         />
-        {errors.amount && (
-          <p className="text-sm text-red-600 mt-1">{errors.amount}</p>
-        )}
+        <FieldError id="amount-error" message={errors.amount} />
         {commission.amount > 0 && (
           <p className="text-sm text-gray-600 mt-1">
             Commission ({commission.rate}%): ${commission.amount.toFixed(2)}
@@ -202,15 +213,15 @@ export default function TransactionForm({ onSuccess }: TransactionFormProps) {
         <select
           value={formData.paymentMethod}
           onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+          onBlur={() => handleBlur('paymentMethod')}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          aria-describedby={errors.paymentMethod ? 'paymentMethod-error' : undefined}
         >
           <option value="cash">Cash</option>
           <option value="mobile_money">Mobile Money</option>
           <option value="bank_transfer">Bank Transfer</option>
         </select>
-        {errors.paymentMethod && (
-          <p className="text-sm text-red-600 mt-1">{errors.paymentMethod}</p>
-        )}
+        <FieldError id="paymentMethod-error" message={errors.paymentMethod} />
       </div>
 
       {/* Reference Number (optional) */}
