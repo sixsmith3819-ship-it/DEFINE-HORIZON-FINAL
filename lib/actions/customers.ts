@@ -410,7 +410,7 @@ export async function createCustomer(
 
     console.log('[createCustomer] Profile check:', { role: profile?.role, error: profileError });
 
-    if (profile?.role !== 'admin' && profile?.role !== 'manager') {
+    if (!profile || !['admin', 'manager', 'employee'].includes(profile.role)) {
       return { success: false, error: 'Permission denied' };
     }
 
