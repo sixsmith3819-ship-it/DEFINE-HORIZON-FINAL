@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { createServerClient } from '@/lib/supabase-server';
 
@@ -40,21 +40,23 @@ export async function getDashboardStats(): Promise<{ success: boolean; data?: Da
     if (!user) return { success: false, error: 'Unauthorized' };
 
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-    const isAdmin = profile?.role === 'admin';
+    const isAdmin = profile?.role === 'admin' || profile?.role === 'manager';
 
     // Get customer count
     const { count: customerCount } = await supabase.from('customers').select('*', { count: 'exact', head: true });
 
+    console.log('[getDashboardStats] userId:', user.id, 'role:', profile?.role, 'isAdmin:', isAdmin);
     // Get transaction stats
-    let transactionQuery = supabase.from('transactions').select('amount, commission, created_at');
+    let transactionQuery = supabase.from('transactions').select('amount, commission_amount, created_at');
     if (!isAdmin) {
       transactionQuery = transactionQuery.eq('created_by', user.id);
     }
-    const { data: transactions } = await transactionQuery;
+    const { data: transactions, error: txError } = await transactionQuery;
+    console.log('[getDashboardStats] tx count:', transactions?.length, 'tx error:', txError?.message);
 
     const totalTransactions = transactions?.length || 0;
     const totalRevenue = transactions?.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0) || 0;
-    const totalCommission = transactions?.reduce((sum, t) => sum + (parseFloat(t.commission) || 0), 0) || 0;
+    const totalCommission = transactions?.reduce((sum, t) => sum + (parseFloat(t.commission_amount) || 0), 0) || 0;
 
     // Recent transactions (last 7 days)
     const sevenDaysAgo = new Date();
@@ -93,12 +95,12 @@ export async function getTransactionTrends(days: number = 30): Promise<{ success
     if (!user) return { success: false, error: 'Unauthorized' };
 
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-    const isAdmin = profile?.role === 'admin';
+    const isAdmin = profile?.role === 'admin' || profile?.role === 'manager';
 
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    let query = supabase.from('transactions').select('amount, commission, created_at').gte('created_at', startDate.toISOString());
+    let query = supabase.from('transactions').select('amount, commission_amount, created_at').gte('created_at', startDate.toISOString());
     if (!isAdmin) {
       query = query.eq('created_by', user.id);
     }
@@ -114,7 +116,7 @@ export async function getTransactionTrends(days: number = 30): Promise<{ success
       trendMap.set(date, {
         count: existing.count + 1,
         revenue: existing.revenue + parseFloat(t.amount),
-        commission: existing.commission + parseFloat(t.commission),
+        commission: existing.commission + parseFloat(t.commission_amount),
       });
     });
 
@@ -135,7 +137,7 @@ export async function getServiceProviderStats(): Promise<{ success: boolean; dat
     if (!user) return { success: false, error: 'Unauthorized' };
 
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-    const isAdmin = profile?.role === 'admin';
+    const isAdmin = profile?.role === 'admin' || profile?.role === 'manager';
 
     let query = supabase.from('transactions').select('service_provider, amount');
     if (!isAdmin) {
@@ -173,13 +175,13 @@ export async function getMonthlyStats(): Promise<{ success: boolean; data?: Mont
     if (!user) return { success: false, error: 'Unauthorized' };
 
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-    const isAdmin = profile?.role === 'admin';
+    const isAdmin = profile?.role === 'admin' || profile?.role === 'manager';
 
     // Get last 12 months
     const startDate = new Date();
     startDate.setMonth(startDate.getMonth() - 12);
 
-    let query = supabase.from('transactions').select('amount, commission, created_at').gte('created_at', startDate.toISOString());
+    let query = supabase.from('transactions').select('amount, commission_amount, created_at').gte('created_at', startDate.toISOString());
     if (!isAdmin) {
       query = query.eq('created_by', user.id);
     }
@@ -196,7 +198,7 @@ export async function getMonthlyStats(): Promise<{ success: boolean; data?: Mont
       monthMap.set(month, {
         transactions: existing.transactions + 1,
         revenue: existing.revenue + parseFloat(t.amount),
-        commission: existing.commission + parseFloat(t.commission),
+        commission: existing.commission + parseFloat(t.commission_amount),
       });
     });
 
