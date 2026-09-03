@@ -35,25 +35,14 @@ export async function getCustomers(
 ): Promise<PaginatedCustomers & { success?: boolean; error?: string }> {
   try {
     const supabase = await createServerClient();
-    
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+
+    const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      return {
-        customers: [],
-        totalCount: 0,
-        pageSize,
-        currentPage: page,
-        totalPages: 0,
-        success: false,
-        error: 'Unauthorized',
-      };
+      return { customers: [], totalCount: 0, pageSize, currentPage: page, totalPages: 0, success: false, error: 'Unauthorized' };
     }
 
-    // Get user role
-    // Check if user can view this customer - query profiles directly
+    // Get user role from profiles
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
@@ -61,30 +50,28 @@ export async function getCustomers(
       .single();
 
     const userRole = profile?.role as string | undefined;
-    // Apply role-based filtering
-    if (userRole?.role === 'employee') {
-      query = query.eq('assigned_employee_id', user.id);
+
+    // Build base query
+    let query = supabase.from('customers').select('*', { count: 'exact' });
+
+    // Role-based filtering: employees only see customers they created or are assigned to
+    if (userRole === 'employee') {
+      query = query.or(`assigned_employee_id.eq.${user.id},created_by.eq.${user.id}`);
     }
 
-    // Apply search term filtering
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      query = query.or(
-        `first_name.ilike.%${searchLower}%,last_name.ilike.%${searchLower}%,business_name.ilike.%${searchLower}%,email.ilike.%${searchLower}%,phone.ilike.%${searchLower}%`
-      );
+    // Apply search term
+    if (searchTerm && searchTerm.trim() !== '') {
+      const s = searchTerm.toLowerCase();
+      query = query.or(`customer_name.ilike.%${s}%,email.ilike.%${s}%,phone.ilike.%${s}%`);
     }
 
-    // Apply status filter
+    // Apply filters
     if (filters?.status) {
       query = query.eq('status', filters.status);
     }
-
-    // Apply customer type filter
     if (filters?.customerType) {
       query = query.eq('customer_type', filters.customerType);
     }
-
-    // Apply date range filters
     if (filters?.createdAfter) {
       query = query.gte('created_at', filters.createdAfter);
     }
@@ -98,20 +85,11 @@ export async function getCustomers(
 
     if (sortBy) {
       switch (sortBy.field) {
-        case 'name':
-          orderByColumn = 'first_name';
-          break;
-        case 'email':
-          orderByColumn = 'email';
-          break;
-        case 'createdAt':
-          orderByColumn = 'created_at';
-          break;
-        case 'status':
-          orderByColumn = 'status';
-          break;
-        default:
-          orderByColumn = 'created_at';
+        case 'name': orderByColumn = 'customer_name'; break;
+        case 'email': orderByColumn = 'email'; break;
+        case 'createdAt': orderByColumn = 'created_at'; break;
+        case 'status': orderByColumn = 'status'; break;
+        default: orderByColumn = 'created_at';
       }
       orderDirection = sortBy.direction;
     }
@@ -126,15 +104,7 @@ export async function getCustomers(
 
     if (error) {
       console.error('Error fetching customers:', error);
-      return {
-        customers: [],
-        totalCount: 0,
-        pageSize,
-        currentPage: page,
-        totalPages: 0,
-        success: false,
-        error: error.message,
-      };
+      return { customers: [], totalCount: 0, pageSize, currentPage: page, totalPages: 0, success: false, error: error.message };
     }
 
     const totalPages = Math.ceil((count || 0) / pageSize);
@@ -149,21 +119,10 @@ export async function getCustomers(
     };
   } catch (error) {
     console.error('Error in getCustomers:', error);
-    return {
-      customers: [],
-      totalCount: 0,
-      pageSize,
-      currentPage: page,
-      totalPages: 0,
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    };
+    return { customers: [], totalCount: 0, pageSize, currentPage: page, totalPages: 0, success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
 
-/**
- * Fetch full customer details including interactions and audit log
- */
 export async function getCustomerDetail(
   customerId: string
 ): Promise<{ success: boolean; customer?: CustomerDetail; interactions?: CustomerInteraction[]; auditLog?: AuditLogEntry[]; error?: string; statusCode?: number }> {
@@ -190,13 +149,13 @@ export async function getCustomerDetail(
     }
 
     // Check if user can view this customer
-    const { data: userRole } = await supabase
-      .from('user_roles')
+    // Query profiles directly (not user_roles view)
+    const { data: profileData } = await supabase
+      .from('profiles')
       .select('role')
-      .eq('user_id', user.id)
+      .eq('id', user.id)
       .single();
-
-    // Employees can view customers they created OR are assigned to
+    const userRole = profileData?.role as string | undefined;
     if (userRole === 'employee' &&
         customer.assigned_employee_id !== user.id &&
         customer.created_by !== user.id) {
@@ -354,16 +313,16 @@ export async function getCustomerAuditLog(
     }
 
     // Check authorization
-    const { data: userRole } = await supabase
-      .from('user_roles')
+    // Query profiles directly
+    const { data: profileData } = await supabase
+      .from('profiles')
       .select('role')
-      .eq('user_id', user.id)
+      .eq('id', user.id)
       .single();
-
-    if (userRole?.role !== 'admin' && userRole?.role !== 'manager') {
+    const userRole = profileData?.role as string | undefined;
+    if (userRole !== 'admin' && userRole !== 'manager') {
       return { error: 'Permission denied' };
     }
-
     const { data: auditLog, error } = await supabase
       .from('customer_audit_log')
       .select('*')
