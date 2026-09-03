@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Save, Settings as SettingsIcon } from 'lucide-react';
 import { getSettings, updateSetting } from '@/lib/actions/settings';
 import { SystemSetting } from '@/lib/types/settings';
+import { FieldError } from '@/components/ui';
+import { validateSettingValue, SettingType } from '@/lib/validation/settings-validation';
 
 export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -11,6 +13,7 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<SystemSetting[]>([]);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [saveMessage, setSaveMessage] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     async function loadSettings() {
@@ -28,19 +31,33 @@ export default function SettingsPage() {
     loadSettings();
   }, []);
 
+  const getSettingType = (key: string): SettingType => {
+    if (key.toLowerCase().includes('commission') || key.toLowerCase().includes('rate')) return 'percentage';
+    if (key.toLowerCase().includes('quantity') || key.toLowerCase().includes('threshold') || key.toLowerCase().includes('stock')) return 'number';
+    return 'text';
+  };
+
   const handleSave = async (key: string) => {
+    const type = getSettingType(key);
+    const validation = validateSettingValue(formData[key] || '', type);
+    if (!validation.valid) {
+      setFieldErrors(prev => ({ ...prev, [key]: validation.error || 'Invalid value' }));
+      return;
+    }
+    setFieldErrors(prev => ({ ...prev, [key]: '' }));
+
     setIsSaving(true);
     setSaveMessage('');
-    
+
     const result = await updateSetting(key, formData[key]);
-    
+
     if (result.success) {
       setSaveMessage('Settings saved successfully');
       setTimeout(() => setSaveMessage(''), 3000);
     } else {
-      alert(result.error || 'Failed to save settings');
+      setFieldErrors(prev => ({ ...prev, [key]: result.error || 'Failed to save settings' }));
     }
-    
+
     setIsSaving(false);
   };
 
@@ -52,7 +69,7 @@ export default function SettingsPage() {
           {[1,2,3].map(i => <div key={i} className="skeleton h-32" />)}
         </div>
       </div>
-    )
+    );
   }
 
   const commissionSettings = settings.filter(s => s.settingKey.includes('commission'));
@@ -96,9 +113,11 @@ export default function SettingsPage() {
                           value={formData[setting.settingKey] || ''}
                           onChange={(e) => setFormData({ ...formData, [setting.settingKey]: e.target.value })}
                           className="dh-input pr-8"
+                          aria-describedby={fieldErrors[setting.settingKey] ? `${setting.settingKey}-error` : undefined}
                         />
                         <span className="absolute right-3 top-2.5 text-sm font-semibold" style={{ color: 'var(--dh-text-3)' }}>%</span>
                       </div>
+                      <FieldError id={`${setting.settingKey}-error`} message={fieldErrors[setting.settingKey]} />
                     </div>
                     <button
                       onClick={() => handleSave(setting.settingKey)}
@@ -129,7 +148,9 @@ export default function SettingsPage() {
                         value={formData[setting.settingKey] || ''}
                         onChange={(e) => setFormData({ ...formData, [setting.settingKey]: e.target.value })}
                         className="dh-input"
+                        aria-describedby={fieldErrors[setting.settingKey] ? `${setting.settingKey}-error` : undefined}
                       />
+                      <FieldError id={`${setting.settingKey}-error`} message={fieldErrors[setting.settingKey]} />
                     </div>
                     <button onClick={() => handleSave(setting.settingKey)} disabled={isSaving} className="dh-btn-primary">
                       <Save className="w-4 h-4" />
@@ -156,7 +177,9 @@ export default function SettingsPage() {
                         value={formData[setting.settingKey] || ''}
                         onChange={(e) => setFormData({ ...formData, [setting.settingKey]: e.target.value })}
                         className="dh-input"
+                        aria-describedby={fieldErrors[setting.settingKey] ? `${setting.settingKey}-error` : undefined}
                       />
+                      <FieldError id={`${setting.settingKey}-error`} message={fieldErrors[setting.settingKey]} />
                     </div>
                     <button onClick={() => handleSave(setting.settingKey)} disabled={isSaving} className="dh-btn-primary">
                       <Save className="w-4 h-4" />

@@ -2,6 +2,7 @@
 
 import { createServerClient } from '@/lib/supabase-server';
 import { SystemSetting, SettingFormData } from '@/lib/types/settings';
+import { validateSettingValue, SettingType } from '@/lib/validation/settings-validation';
 
 export async function getSettings(): Promise<{ success: boolean; settings?: SystemSetting[]; error?: string }> {
   try {
@@ -60,8 +61,13 @@ export async function getSetting(key: string): Promise<{ success: boolean; setti
   }
 }
 
-export async function updateSetting(key: string, value: string): Promise<{ success: boolean; error?: string }> {
+export async function updateSetting(key: string, value: string, type?: SettingType): Promise<{ success: boolean; error?: string }> {
   try {
+    const validation = validateSettingValue(value, type ?? 'text');
+    if (!validation.valid) {
+      return { success: false, error: validation.error };
+    }
+
     const supabase = await createServerClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Unauthorized' };
